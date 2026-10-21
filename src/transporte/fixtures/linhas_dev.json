@@ -1,0 +1,44 @@
+[
+  {"model": "transporte.linha", "pk": 1, "fields": {"codigo": "018", "nome": "Brasília Teimosa", "modal": "onibus", "operadora": "", "destino_ida": "Brasília Teimosa", "destino_volta": "Cais de Santa Rita", "ativa": true, "gtfs_route_id": ""}},
+  {"model": "transporte.linha", "pk": 2, "fields": {"codigo": "061", "nome": "Piedade", "modal": "onibus", "operadora": "", "destino_ida": "Piedade", "destino_volta": "Cais de Santa Rita", "ativa": true, "gtfs_route_id": ""}},
+  {"model": "transporte.linha", "pk": 3, "fields": {"codigo": "071", "nome": "Candeias", "modal": "onibus", "operadora": "", "destino_ida": "Candeias", "destino_volta": "Cais de Santa Rita", "ativa": true, "gtfs_route_id": ""}},
+  {"model": "transporte.linha", "pk": 4, "fields": {"codigo": "1076", "nome": "TI Pelópidas Silveira", "modal": "brt", "operadora": "", "destino_ida": "TI Pelópidas Silveira", "destino_volta": "Forte do Brum", "ativa": true, "gtfs_route_id": ""}},
+  {"model": "transporte.linha", "pk": 5, "fields": {"codigo": "SUL", "nome": "Linha Sul do metrô", "modal": "metro", "operadora": "CBTU", "destino_ida": "Cajueiro Seco", "destino_volta": "Recife", "ativa": true, "gtfs_route_id": ""}},
+
+  {"model": "transporte.parada", "pk": 1, "fields": {"nome": "Terminal Cais de Santa Rita", "lat": "-8.068900", "lon": "-34.877400", "eh_terminal": false, "gtfs_stop_id": ""}},
+  {"model": "transporte.parada", "pk": 2, "fields": {"nome": "Estação BRT Forte do Brum", "lat": "-8.056300", "lon": "-34.871200", "eh_terminal": false, "gtfs_stop_id": ""}},
+  {"model": "transporte.parada", "pk": 3, "fields": {"nome": "TI Pelópidas Silveira", "lat": "-7.940000", "lon": "-34.874000", "eh_terminal": true, "gtfs_stop_id": ""}},
+  {"model": "transporte.parada", "pk": 4, "fields": {"nome": "Estação Recife (metrô)", "lat": "-8.068300", "lon": "-34.883800", "eh_terminal": false, "gtfs_stop_id": ""}},
+  {"model": "transporte.parada", "pk": 5, "fields": {"nome": "TI Joana Bezerra", "lat": "-8.076100", "lon": "-34.898200", "eh_terminal": true, "gtfs_stop_id": ""}},
+  {"model": "transporte.parada", "pk": 6, "fields": {"nome": "TI Cajueiro Seco", "lat": "-8.164700", "lon": "-34.926900", "eh_terminal": true, "gtfs_stop_id": ""}},
+  {"model": "transporte.parada", "pk": 7, "fields": {"nome": "Av. Bernardo Vieira de Melo (Piedade)", "lat": "-8.168000", "lon": "-34.917000", "eh_terminal": false, "gtfs_stop_id": ""}},
+  {"model": "transporte.parada", "pk": 8, "fields": {"nome": "Av. Brasília Formosa (Brasília Teimosa)", "lat": "-8.087000", "lon": "-34.880000", "eh_terminal": false, "gtfs_stop_id": ""}},
+  {"model": "transporte.parada", "pk": 9, "fields": {"nome": "Av. Bernardo Vieira de Melo (Candeias)", "lat": "-8.198000", "lon": "-34.920000", "eh_terminal": false, "gtfs_stop_id": ""}},
+
+  {"model": "transporte.linhaparada", "pk": 1, "fields": {"linha": 1, "parada": 1, "sentido": "ida", "ordem": 1}},
+  {"model": "transporte.linhaparada", "pk": 2, "fields": {"linha": 1, "parada": 8, "sentido": "ida", "ordem": 2}},
+  {"model": "transporte.linhaparada", "pk": 3, "fields": {"linha": 1, "parada": 8, "sentido": "volta", "ordem": 1}},
+  {"model": "transporte.linhaparada", "pk": 4, "fields": {"linha": 1, "parada": 1, "sentido": "volta", "ordem": 2}},
+
+  {"model": "transporte.linhaparada", "pk": 5, "fields": {"linha": 2, "parada": 1, "sentido": "ida", "ordem": 1}},
+  {"model": "transporte.linhaparada", "pk": 6, "fields": {"linha": 2, "parada": 7, "sentido": "ida", "ordem": 2}},
+  {"model": "transporte.linhaparada", "pk": 7, "fields": {"linha": 2, "parada": 7, "sentido": "volta", "ordem": 1}},
+  {"model": "transporte.linhaparada", "pk": 8, "fields": {"linha": 2, "parada": 1, "sentido": "volta", "ordem": 2}},
+
+  {"model": "transporte.linhaparada", "pk": 9, "fields": {"linha": 3, "parada": 1, "sentido": "ida", "ordem": 1}},
+  {"model": "transporte.linhaparada", "pk": 10, "fields": {"linha": 3, "parada": 9, "sentido": "ida", "ordem": 2}},
+  {"model": "transporte.linhaparada", "pk": 11, "fields": {"linha": 3, "parada": 9, "sentido": "volta", "ordem": 1}},
+  {"model": "transporte.linhaparada", "pk": 12, "fields": {"linha": 3, "parada": 1, "sentido": "volta", "ordem": 2}},
+
+  {"model": "transporte.linhaparada", "pk": 13, "fields": {"linha": 4, "parada": 2, "sentido": "ida", "ordem": 1}},
+  {"model": "transporte.linhaparada", "pk": 14, "fields": {"linha": 4, "parada": 3, "sentido": "ida", "ordem": 2}},
+  {"model": "transporte.linhaparada", "pk": 15, "fields": {"linha": 4, "parada": 3, "sentido": "volta", "ordem": 1}},
+  {"model": "transporte.linhaparada", "pk": 16, "fields": {"linha": 4, "parada": 2, "sentido": "volta", "ordem": 2}},
+
+  {"model": "transporte.linhaparada", "pk": 17, "fields": {"linha": 5, "parada": 4, "sentido": "ida", "ordem": 1}},
+  {"model": "transporte.linhaparada", "pk": 18, "fields": {"linha": 5, "parada": 5, "sentido": "ida", "ordem": 2}},
+  {"model": "transporte.linhaparada", "pk": 19, "fields": {"linha": 5, "parada": 6, "sentido": "ida", "ordem": 3}},
+  {"model": "transporte.linhaparada", "pk": 20, "fields": {"linha": 5, "parada": 6, "sentido": "volta", "ordem": 1}},
+  {"model": "transporte.linhaparada", "pk": 21, "fields": {"linha": 5, "parada": 5, "sentido": "volta", "ordem": 2}},
+  {"model": "transporte.linhaparada", "pk": 22, "fields": {"linha": 5, "parada": 4, "sentido": "volta", "ordem": 3}}
+]
