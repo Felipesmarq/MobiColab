@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Ambiente
+.env
+
+# Django
+staticfiles/
+media/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editores e SO
+.vscode/
+.idea/
+.DS_Store
+
+# Claude Code (local)
+.claude/
