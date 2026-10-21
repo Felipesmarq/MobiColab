@@ -23,5 +23,5 @@ media/
 .idea/
 .DS_Store
 
-# Claude Code (local)
+# Claude skills
 .claude/
