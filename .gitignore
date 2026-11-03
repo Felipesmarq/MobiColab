@@ -25,3 +25,6 @@ media/
 
 # Claude skills
 .claude/
+# Arquivos de fontes externas e saídas geradas (dados/externos/README.md explica)
+dados/externos/*
+!dados/externos/README.md
