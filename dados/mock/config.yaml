@@ -24,6 +24,12 @@ usuarios:
   quantidade:
     valor: 400
     fonte: "Suposição. Ordem de grandeza de um piloto concentrado em poucas linhas (spec, seção 10)."
+  dispersao_atividade:
+    valor: 1.0
+    fonte: "Suposição. Desvio-padrão (escala log) da atividade dos usuários: poucos relatam muito e muitos relatam pouco, como em plataformas colaborativas."
+  atividade_troll:
+    valor: 4.0
+    fonte: "Suposição. Quantas vezes um troll relata mais que um usuário típico, para a EDA achar volume anômalo (RD04)."
   fracao_trolls:
     valor: 0.02
     fonte: "Suposição. Pequena fração de usuários que relata ao acaso, para a EDA ter anomalias a encontrar (RD04) e a moderação ter o que revisar (RF07)."
@@ -137,6 +143,9 @@ interacoes:
   prob_ainda_vale:
     valor: 0.80
     fonte: "Suposição. Fração dos votos de usuários comuns que confirmam o relato."
+  prob_ainda_vale_troll:
+    valor: 0.25
+    fonte: "Suposição. Relatos de trolls são mais contestados que confirmados (RF05)."
   prob_remocao_troll:
     valor: 0.30
     fonte: "Suposição. Fração dos relatos de trolls que a moderação remove (RF07)."

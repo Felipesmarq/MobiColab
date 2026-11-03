@@ -374,7 +374,9 @@ MobiColab/
 │   ├── transporte/       # Linha, Parada, LinhaParada, modais, importar_gtfs, fixtures
 │   ├── relatos/          # Relato, Confirmacao, regras.py, status
 │   └── templates/        # base.html e telas (inclui o link "Painel" do RF06)
-├── dados/                # trilha de dados (frente de CC) — a partir da fase 1
+├── dados/                # trilha de dados (frente de CC); app Django só com comandos (ADR 0025)
+│   ├── management/       # comandos gerar_mock e pipeline do manage.py
+│   ├── externos/         # arquivos de fontes externas lidos pela bronze (fora do git)
 │   ├── mock/             # gerador de dados mockados + config.yaml (RD02)
 │   ├── pipeline/         # bronze → prata → ouro + testes de qualidade (RD03)
 │   ├── notebooks/        # 03-eda.ipynb, 10-modelagem.ipynb (RD04, RD11)

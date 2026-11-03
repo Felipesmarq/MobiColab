@@ -28,6 +28,7 @@ Cada arquivo registra uma decisão: contexto, decisão, alternativas e consequê
 | 0022 | [Repositório público com licença MIT](0022-repositorio-publico-mit.md) | aceita |
 | 0023 | [Fixture de linhas reais para desenvolvimento](0023-fixture-de-desenvolvimento.md) | aceita |
 | 0024 | [Organização do repositório por frente de trabalho](0024-organizacao-do-repositorio.md) | aceita |
+| 0025 | [Trilha de dados como app Django em `dados/`](0025-trilha-de-dados-como-app-django.md) | aceita |
 
 ## Modelo
 

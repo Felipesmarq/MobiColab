@@ -6,6 +6,7 @@ Tudo o que a equipe de CC produz em código: gerador de dados mockados, pipeline
 | --- | --- | --- |
 | [`mock/`](mock/) | `config.yaml` com os parâmetros do gerador, cada um com a fonte que o justifica | RD02 |
 | `externos/` | Arquivos de fontes externas (ex.: temperatura) lidos pela camada bronze. Não vão para o git | RD02, RD03 |
+| `management/commands/` | Comandos do `manage.py` da trilha (`gerar_mock`) | RD02 |
 
 ## Dados mockados
 
@@ -20,3 +21,19 @@ Para mudar um parâmetro, edite o `config.yaml` mantendo a fonte atualizada e ro
 ```bash
 uv run pytest tests/test_rd02_mock_config.py
 ```
+
+### Gerar os dados
+
+Com as linhas carregadas (`python manage.py loaddata linhas_dev`):
+
+```bash
+python manage.py gerar_mock              # 28 dias terminando hoje
+python manage.py gerar_mock --limpar     # apaga o mock anterior e gera de novo
+python manage.py gerar_mock --dias 7 --fim 2026-11-01 --semente 1
+```
+
+O comando grava usuários, relatos (com substituições e remoções) e confirmações no banco do app, com o mesmo esquema dos dados reais, e escreve a temperatura horária sintética em `externos/temperatura/temperatura_mock.csv`. Com a configuração do repositório, são cerca de 25 mil relatos.
+
+- **Marca de mock:** todo usuário gerado tem e-mail `@mock.mobicolab.invalid`. O `--limpar` só apaga o que tem essa marca; dados reais nunca são tocados.
+- **Reprodutível:** a mesma configuração e a mesma data final geram sempre os mesmos dados.
+- **Trolls:** uma pequena fração dos usuários relata ao acaso e com volume alto. A moderação remove parte desses relatos — é o que a EDA deve encontrar como anomalia (RD04).
