@@ -59,3 +59,21 @@ Cópia imutável da origem, só acrescentada: relatos, confirmações, linhas, p
 - `bronze.execucoes` registra cada execução: linhas lidas e versões novas por tabela.
 
 No PostgreSQL as camadas são schemas (`bronze.relatos`); no SQLite local viram prefixo (`bronze__relatos`).
+
+### Prata
+
+Dados limpos, apagados e recriados do zero a cada execução a partir da bronze — nunca da origem.
+
+| Tabela | O que tem |
+| --- | --- |
+| `prata.relatos` | Relatos válidos para análise, com data, hora e faixa horária no fuso America/Recife, dados da linha, destino, passagem por Terminal Integrado e votos recebidos |
+| `prata.relatos_historico` | Todo relato, inclusive removidos (RF07), substituídos (RN05) e fora dos domínios da RN01, com o motivo de cada um ficar fora |
+| `prata.confirmacoes` | Votos atuais |
+| `prata.linhas` | Cadastro atual de linhas, com a passagem por Terminal Integrado em cada sentido |
+| `prata.temperatura` | Série horária única: INMET quando houver, mock senão; lacunas de até 2 h interpoladas, maiores deixadas vazias (`fonte = ausente`) |
+
+Regras de limpeza:
+
+- **Campos opcionais vazios viram `nao_informado`.** Nada é imputado: a falta de informação tem viés (MNAR, RD02) e é uma categoria da análise.
+- **Faixas horárias:** madrugada (0–4h), início da manhã (5h), pico da manhã (6–8h), entre picos (9–16h), pico da tarde (17–19h), noite (20–23h).
+- **Operadora vazia vira `nao_informada`.**
