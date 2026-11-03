@@ -100,3 +100,17 @@ from django.db import connection
 
 por_hora = pd.read_sql("SELECT * FROM ouro.relatos_por_hora", connection.connection)
 ```
+
+### Testes de qualidade
+
+Rodam ao fim de toda execução do `pipeline` ([`pipeline/qualidade.py`](pipeline/qualidade.py)). Se uma regra falhar, o comando sai com erro e **nada daquela execução é gravado** — a ouro anterior continua valendo.
+
+| Regra | O que confere |
+| --- | --- |
+| Contagem | Nada some nem aparece entre camadas: bronze → histórico → relatos válidos → somas da ouro; votos contados batem com os votos da prata |
+| Nulo | Colunas obrigatórias de `prata.relatos` e chaves de `ouro.relatos_por_hora` preenchidas (ex.: relato sem linha correspondente) |
+| Domínio | Valores da RN01, faixas horárias, hora entre 0 e 23, taxas entre 0 e 1, contagens não negativas |
+| Unicidade | Chaves únicas em `prata.relatos` e nas três tabelas da ouro |
+| Privacidade | Nenhuma tabela da ouro declara identificador de relato ou de usuário |
+
+No CI, depois do pytest, um passo gera 7 dias de mock no PostgreSQL e roda o pipeline de ponta a ponta: se a qualidade falhar, o build falha.
