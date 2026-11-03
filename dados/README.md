@@ -77,3 +77,26 @@ Regras de limpeza:
 - **Campos opcionais vazios viram `nao_informado`.** Nada é imputado: a falta de informação tem viés (MNAR, RD02) e é uma categoria da análise.
 - **Faixas horárias:** madrugada (0–4h), início da manhã (5h), pico da manhã (6–8h), entre picos (9–16h), pico da tarde (17–19h), noite (20–23h).
 - **Operadora vazia vira `nao_informada`.**
+
+### Ouro
+
+Fonte única do painel e dos notebooks (RF06, RD04). **Só agregados:** nenhuma tabela tem identificador de relato ou de usuário. Recriada do zero a partir da prata.
+
+| Tabela | Grão | Para quê |
+| --- | --- | --- |
+| `ouro.relatos_por_hora` | dia × hora × linha × sentido × origem | Base de todos os gráficos e filtros (modal, linha, período, faixa horária). Contagens de cada valor de cada dimensão, votos e a temperatura da hora |
+| `ouro.taxas_por_linha` | linha × faixa horária × origem | Taxas das hipóteses: lotado (H1), ar não funcionando (H2), quente (H3) e vaga ocupada (H4) |
+| `ouro.qualidade_diaria` | dia × origem | Volume, remoções, substituições, votos, usuários ativos e cobertura de temperatura (página "Qualidade dos dados") |
+
+- **Taxas sempre com numerador e denominador.** Para outro recorte, some as contagens e divida — nunca tire média de taxas.
+- **Denominador da falha do ar:** só veículos climatizados com ar informado (funcionando + não funcionando); "sem ar" fica de fora.
+- **Taxa sem denominador fica vazia, não zero:** "ninguém informou" é diferente de "ninguém viu".
+- **Cuidado com o viés MNAR:** como quem tem o ar quebrado informa mais, a taxa de falha observada sai bem acima da real. Com o mock, a configuração usa falha de 25% e a ouro mostra perto de 50%.
+
+```python
+# Exemplo em notebook: ler a ouro direto do banco
+import pandas as pd
+from django.db import connection
+
+por_hora = pd.read_sql("SELECT * FROM ouro.relatos_por_hora", connection.connection)
+```
