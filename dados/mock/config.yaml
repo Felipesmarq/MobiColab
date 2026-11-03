@@ -1,0 +1,145 @@
+# Parâmetros do gerador de dados mockados (RD02, ADR 0006).
+#
+# Regra: todo parâmetro é um par {valor, fonte}. A fonte diz de onde o valor
+# veio. Quando não há dado real, a fonte diz isso com todas as letras
+# ("Suposição") — esses parâmetros são os primeiros a recalibrar quando houver
+# relatos reais ou os dados pedidos à Prefeitura (spec, seção 12).
+#
+# Lembrete: o gerador só devolve os padrões programados aqui. As hipóteses
+# H1–H4 do RD01 estão embutidas de propósito, para o pipeline e o dashboard
+# terem o que mostrar. Achados sobre mock validam o pipeline e as
+# visualizações, não o comportamento dos passageiros.
+
+reprodutibilidade:
+  semente:
+    valor: 20261103
+    fonte: "Escolha do grupo. Semente fixa: a mesma configuração gera sempre os mesmos dados."
+
+periodo:
+  dias:
+    valor: 28
+    fonte: "Escolha do grupo. Quatro semanas cobrem cada dia da semana quatro vezes, o bastante para a EDA (RD04)."
+
+usuarios:
+  quantidade:
+    valor: 400
+    fonte: "Suposição. Ordem de grandeza de um piloto concentrado em poucas linhas (spec, seção 10)."
+  fracao_trolls:
+    valor: 0.02
+    fonte: "Suposição. Pequena fração de usuários que relata ao acaso, para a EDA ter anomalias a encontrar (RD04) e a moderação ter o que revisar (RF07)."
+
+volume:
+  relatos_por_hora_pico:
+    valor: 10
+    fonte: "Suposição. Relatos por linha e sentido na hora mais movimentada; não há dado de adesão ao app."
+  perfil_horario:
+    valor: [0.02, 0.01, 0.01, 0.01, 0.06, 0.35, 0.85, 1.00, 0.80, 0.45, 0.35, 0.35,
+            0.45, 0.40, 0.35, 0.40, 0.60, 0.90, 1.00, 0.75, 0.45, 0.30, 0.15, 0.05]
+    fonte: "Suposição. Fração do volume de pico em cada hora (0h a 23h), com picos de 6h–8h e 17h–19h, típicos do deslocamento casa–trabalho/estudo. Substituir pela demanda por linha pedida à Prefeitura (spec, seção 12)."
+  fator_fim_de_semana:
+    valor: 0.55
+    fonte: "Suposição. Menos viagens de trabalho e estudo no sábado e no domingo."
+
+lotacao:
+  horas_pico:
+    valor: [6, 7, 8, 17, 18, 19]
+    fonte: "Suposição, a mesma do perfil horário."
+  horas_madrugada:
+    valor: [0, 1, 2, 3, 4]
+    fonte: "Suposição. Faixa de operação reduzida."
+  pico:
+    valor: {vazio: 0.08, moderado: 0.32, lotado: 0.60}
+    fonte: "Suposição alinhada à H1 (RD01): a lotação se concentra nos picos."
+  fora_do_pico:
+    valor: {vazio: 0.35, moderado: 0.45, lotado: 0.20}
+    fonte: "Suposição."
+  madrugada:
+    valor: {vazio: 0.70, moderado: 0.25, lotado: 0.05}
+    fonte: "Suposição."
+  acrescimo_lotado_terminal:
+    valor: 0.15
+    fonte: "Suposição alinhada à H1: em linha que passa por Terminal Integrado, a probabilidade de 'lotado' sobe este tanto (tirado de 'vazio' e, se faltar, de 'moderado')."
+
+climatizacao:
+  fracao_frota_com_ar:
+    valor: 0.163
+    fonte: "Grande Recife: 401 dos 2.462 ônibus em circulação tinham ar-condicionado no início de 2026 (Diário de Pernambuco, citado no RD01)."
+  fracao_frota_com_ar_por_linha:
+    valor: {}
+    fonte: "Sem dado. A lista de frota climatizada por linha foi pedida à Prefeitura (spec, seção 12); quando chegar, entra aqui por código de linha."
+  prob_ar_nao_funcionando:
+    valor: 0.25
+    fonte: "Suposição. Probabilidade média de o ar de um veículo climatizado estar quebrado."
+  variacao_ar_entre_linhas:
+    valor: 0.10
+    fonte: "Suposição alinhada à H2 (RD01): desvio-padrão da probabilidade de falha entre linhas."
+
+conforto_termico:
+  temperatura_referencia_c:
+    valor: 27.0
+    fonte: "Ordem de grandeza da temperatura média de Recife (INMET, normais climatológicas). Conferir na validação da série do INMET (issue #26)."
+  sem_ar:
+    valor: {prob_quente: 0.55, aumento_por_grau: 0.07, prob_frio: 0.02}
+    fonte: "Suposição alinhada à H3 (RD01): sem ar, 'quente' cresce com a temperatura. prob_quente vale na temperatura de referência e muda aumento_por_grau a cada °C."
+  ar_funcionando:
+    valor: {prob_quente: 0.12, aumento_por_grau: 0.02, prob_frio: 0.20}
+    fonte: "Suposição alinhada à H3: com ar funcionando, a temperatura externa pesa pouco."
+
+temperatura:
+  media_diaria_c:
+    valor: 27.0
+    fonte: "Ordem de grandeza da normal climatológica de Recife (INMET). Temperatura sintética até a série horária real do INMET entrar (issue #26)."
+  amplitude_diaria_c:
+    valor: 3.5
+    fonte: "Suposição de ordem de grandeza: metade da diferença entre a máxima e a mínima do dia em cidade litorânea tropical. Conferir na issue #26."
+  hora_mais_quente:
+    valor: 13
+    fonte: "Suposição: pico de temperatura no início da tarde."
+  variacao_entre_dias_c:
+    valor: 1.0
+    fonte: "Suposição: desvio-padrão da média diária entre dias."
+  ruido_horario_c:
+    valor: 0.5
+    fonte: "Suposição: desvio-padrão do ruído de cada hora."
+
+vaga_pcd:
+  prob_ocupada_por_lotacao:
+    valor: {vazio: 0.10, moderado: 0.30, lotado: 0.70}
+    fonte: "Suposição alinhada à H4 (RD01): a ocupação da vaga PCD acompanha a lotação."
+
+preenchimento:
+  conforto_termico:
+    valor: 0.60
+    fonte: "Suposição. Fração dos relatos que informa o conforto térmico (campo opcional)."
+  vaga_pcd:
+    valor: 0.35
+    fonte: "Suposição. Fração dos relatos que informa a vaga PCD (campo opcional)."
+  ar_quando_funcionando:
+    valor: 0.25
+    fonte: "Suposição do mecanismo MNAR descrito no RD02: com o ar funcionando, pouca gente informa."
+  ar_quando_nao_funcionando:
+    valor: 0.75
+    fonte: "Suposição do mecanismo MNAR descrito no RD02: quem relata o ar tende a fazê-lo quando ele está quebrado."
+  ar_quando_sem_ar:
+    valor: 0.35
+    fonte: "Suposição. Fração que informa 'sem ar' em veículo não climatizado."
+  prefixo_veiculo:
+    valor: 0.10
+    fonte: "Suposição. O passageiro raramente olha o prefixo pintado na lataria (ADR 0003)."
+
+interacoes:
+  prob_substituicao:
+    valor: 0.05
+    fonte: "Suposição. Fração dos relatos que o mesmo usuário refaz em menos de RELATO_INTERVALO_MIN (RN05)."
+  confirmacoes_por_relato:
+    valor: 0.40
+    fonte: "Suposição. Média de votos (confirmações + contestações) por relato (RF05)."
+  prob_ainda_vale:
+    valor: 0.80
+    fonte: "Suposição. Fração dos votos de usuários comuns que confirmam o relato."
+  prob_remocao_troll:
+    valor: 0.30
+    fonte: "Suposição. Fração dos relatos de trolls que a moderação remove (RF07)."
+  prob_remocao_comum:
+    valor: 0.002
+    fonte: "Suposição. Fração dos relatos de usuários comuns removidos por engano ou abuso pontual."

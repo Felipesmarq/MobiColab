@@ -10,6 +10,7 @@ dependencies = [
     "djangorestframework>=3.15",
     "django-environ>=0.11",
     "psycopg[binary]>=3.2",
+    "pyyaml>=6.0",
 ]
 
 [dependency-groups]
@@ -26,7 +27,7 @@ package = false
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["src", "tests"]
+src = ["src", "."]
 extend-exclude = ["*/migrations/*"]
 
 [tool.ruff.lint]
@@ -34,11 +35,11 @@ select = ["E", "F", "I", "UP", "B", "DJ"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "--strict-markers"
 
 [tool.coverage.run]
-source = ["src"]
+source = ["src", "dados"]
 omit = ["*/migrations/*"]
