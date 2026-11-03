@@ -44,6 +44,13 @@ jobs:
         run: uv run python manage.py makemigrations --check --dry-run
       - name: Pytest com cobertura
         run: uv run pytest --cov --cov-report=term-missing
+      - name: Pipeline de dados de ponta a ponta (com testes de qualidade)
+        run: |
+          uv run python manage.py migrate --noinput
+          uv run python manage.py loaddata linhas_dev
+          uv run python manage.py gerar_mock --dias 7
+          uv run python manage.py pipeline
+          uv run python manage.py pipeline --sem-bronze
 
   docker:
     name: Build do Docker Compose
