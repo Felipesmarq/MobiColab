@@ -56,7 +56,7 @@ uv run ruff check . && uv run ruff format --check .
 1. Pegue uma issue no quadro do projeto. Toda issue cita o requisito da spec (RF, RN, RNF ou RD).
 2. Crie uma branch curta a partir da `main` (ex.: `rf03-envio-relato`).
 3. Escreva o teste do critério de aceite antes do código.
-4. Abra um PR em português. O CI precisa estar verde e um colega precisa aprovar.
+4. Abra um PR em português, com `Closes #N` na descrição (a palavra-chave precisa ser em inglês — `Fecha #N` não funciona). Assim a issue fecha sozinha no merge e o card vai para Feito. O CI precisa estar verde e um colega precisa aprovar.
 5. Se o código precisar de algo que a spec não diz, atualize a spec no mesmo PR. Se tomar uma decisão relevante, registre um ADR em `docs/decisoes/`.
 
 ## Licença
