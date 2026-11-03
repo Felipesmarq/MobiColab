@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from dados.pipeline import bronze, prata
+from dados.pipeline import bronze, ouro, prata
 
 
 class Command(BaseCommand):
@@ -23,4 +23,7 @@ class Command(BaseCommand):
             self.stdout.write("Prata (linhas):")
             for tabela, linhas in prata.executar().items():
                 self.stdout.write(f"  prata.{tabela}: {linhas}")
+            self.stdout.write("Ouro (linhas):")
+            for tabela, linhas in ouro.executar().items():
+                self.stdout.write(f"  ouro.{tabela}: {linhas}")
         self.stdout.write(self.style.SUCCESS("Pipeline concluído."))

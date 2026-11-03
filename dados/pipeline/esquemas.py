@@ -295,3 +295,113 @@ TABELAS_PRATA = (
     PRATA_LINHAS,
     PRATA_TEMPERATURA,
 )
+
+# ---------------------------------------------------------------- ouro
+# Só agregados: nenhuma tabela da ouro tem identificador de relato ou de usuário (RF06).
+# As taxas ficam com o numerador e o denominador, para o dashboard poder somar contagens
+# em qualquer recorte e recalcular a taxa (média de taxas engana).
+
+_CONTAGENS_DIMENSOES = (
+    _c("n_relatos", "inteiro", "Relatos válidos"),
+    _c("n_vazio", "inteiro", "Relatos com lotação vazio"),
+    _c("n_moderado", "inteiro", "Relatos com lotação moderado"),
+    _c("n_lotado", "inteiro", "Relatos com lotação lotado"),
+    _c("n_ar_funcionando", "inteiro", "Ar-condicionado funcionando"),
+    _c("n_ar_nao_funcionando", "inteiro", "Ar-condicionado não funcionando"),
+    _c("n_sem_ar", "inteiro", "Veículo sem ar"),
+    _c("n_ar_nao_informado", "inteiro", "Ar não informado"),
+    _c("n_frio", "inteiro", "Conforto térmico frio"),
+    _c("n_agradavel", "inteiro", "Conforto térmico agradável"),
+    _c("n_quente", "inteiro", "Conforto térmico quente"),
+    _c("n_conforto_nao_informado", "inteiro", "Conforto térmico não informado"),
+    _c("n_vaga_disponivel", "inteiro", "Vaga PCD disponível"),
+    _c("n_vaga_ocupada", "inteiro", "Vaga PCD ocupada"),
+    _c("n_vaga_nao_informada", "inteiro", "Vaga PCD não informada"),
+    _c("n_confirmacoes", "inteiro", "Confirmações recebidas por esses relatos"),
+    _c("n_contestacoes", "inteiro", "Contestações recebidas por esses relatos"),
+)
+
+OURO_RELATOS_POR_HORA = Tabela(
+    "ouro",
+    "relatos_por_hora",
+    "Contagens por dia, hora, linha e sentido: base de todos os gráficos e filtros do painel "
+    "(modal, linha, período e faixa horária).",
+    (
+        _c("data", "data", "Dia (America/Recife)"),
+        _c("hora", "inteiro", "Hora (0 a 23, America/Recife)"),
+        _c("dia_semana", "inteiro", "0 = segunda … 6 = domingo"),
+        _c("fim_de_semana", "booleano", "Sábado ou domingo"),
+        _c("faixa_horaria", "texto", "Faixa horária da prata"),
+        _c("linha_codigo", "texto", "Código da linha"),
+        _c("linha_nome", "texto", "Nome da linha"),
+        _c("modal", "texto", "onibus, brt ou metro"),
+        _c("operadora", "texto", "Operadora ou nao_informada"),
+        _c("sentido", "texto", "ida ou volta"),
+        _c("destino", "texto", "Destino do sentido"),
+        _c("passa_por_terminal", "booleano", "O sentido passa por Terminal Integrado"),
+        _c("origem", "texto", "mock ou real"),
+    )
+    + _CONTAGENS_DIMENSOES
+    + (
+        _c("temperatura_c", "real", "Temperatura externa na hora (vazia se ausente)"),
+        _c("temperatura_fonte", "texto", "inmet, mock, interpolada ou ausente"),
+    ),
+    chave=("data", "hora", "linha_codigo", "sentido", "origem"),
+)
+
+OURO_TAXAS_POR_LINHA = Tabela(
+    "ouro",
+    "taxas_por_linha",
+    "Taxas por linha e faixa horária, com numerador e denominador (H1–H4 do RD01).",
+    (
+        _c("linha_codigo", "texto", "Código da linha"),
+        _c("linha_nome", "texto", "Nome da linha"),
+        _c("modal", "texto", "onibus, brt ou metro"),
+        _c("operadora", "texto", "Operadora ou nao_informada"),
+        _c("faixa_horaria", "texto", "Faixa horária"),
+        _c("origem", "texto", "mock ou real"),
+        _c("n_relatos", "inteiro", "Relatos válidos (denominador da taxa de lotado)"),
+        _c("n_lotado", "inteiro", "Relatos lotado"),
+        _c("taxa_lotado", "real", "n_lotado / n_relatos (H1)"),
+        _c(
+            "n_ar_climatizado_informado", "inteiro", "Relatos com ar funcionando ou não funcionando"
+        ),
+        _c("n_ar_nao_funcionando", "inteiro", "Relatos com ar não funcionando"),
+        _c("taxa_ar_nao_funcionando", "real", "Falha entre veículos climatizados informados (H2)"),
+        _c("n_conforto_informado", "inteiro", "Relatos com conforto térmico informado"),
+        _c("n_quente", "inteiro", "Relatos quente"),
+        _c("taxa_quente", "real", "n_quente / n_conforto_informado (H3)"),
+        _c("n_vaga_informada", "inteiro", "Relatos com vaga PCD informada"),
+        _c("n_vaga_ocupada", "inteiro", "Relatos com vaga ocupada"),
+        _c("taxa_vaga_ocupada", "real", "n_vaga_ocupada / n_vaga_informada (H4)"),
+    ),
+    chave=("linha_codigo", "faixa_horaria", "origem"),
+)
+
+OURO_QUALIDADE_DIARIA = Tabela(
+    "ouro",
+    "qualidade_diaria",
+    "Indicadores diários de qualidade e volume (página 'Qualidade dos dados' do painel).",
+    (
+        _c("data", "data", "Dia (America/Recife)"),
+        _c("origem", "texto", "mock ou real"),
+        _c("n_relatos_total", "inteiro", "Todos os relatos do dia, inclusive fora da análise"),
+        _c("n_validos", "inteiro", "Relatos que entram na análise"),
+        _c("n_removidos", "inteiro", "Removidos pela moderação"),
+        _c("n_substituidos", "inteiro", "Substituídos pelo mesmo usuário (RN05)"),
+        _c("n_fora_do_dominio", "inteiro", "Com valor fora da RN01"),
+        _c("n_confirmacoes", "inteiro", "Confirmações recebidas pelos relatos válidos do dia"),
+        _c("n_contestacoes", "inteiro", "Contestações recebidas pelos relatos válidos do dia"),
+        _c("n_usuarios_ativos", "inteiro", "Usuários distintos que relataram"),
+        _c("n_linhas_com_relato", "inteiro", "Linhas com ao menos um relato válido"),
+        _c(
+            "horas_com_temperatura",
+            "inteiro",
+            "Horas do dia com temperatura (medida ou interpolada)",
+        ),
+        _c("horas_temperatura_interpolada", "inteiro", "Horas com temperatura interpolada"),
+    ),
+    chave=("data", "origem"),
+)
+
+TABELAS_OURO = (OURO_RELATOS_POR_HORA, OURO_TAXAS_POR_LINHA, OURO_QUALIDADE_DIARIA)
