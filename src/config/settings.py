@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "contas",
     "transporte",
     "relatos",
+    "dados",
 ]
 
 MIDDLEWARE = [

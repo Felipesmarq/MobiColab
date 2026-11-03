@@ -28,6 +28,7 @@ PROBABILIDADES = [
     "preenchimento.prefixo_veiculo",
     "interacoes.prob_substituicao",
     "interacoes.prob_ainda_vale",
+    "interacoes.prob_ainda_vale_troll",
     "interacoes.prob_remocao_troll",
     "interacoes.prob_remocao_comum",
     "lotacao.acrescimo_lotado_terminal",
@@ -180,6 +181,8 @@ def validar(config):
         ),
         "precisa ter vazio, moderado e lotado com probabilidades entre 0 e 1",
     )
+    for caminho in ("usuarios.dispersao_atividade", "usuarios.atividade_troll"):
+        checar(caminho, lambda v: eh_numero(v) and v >= 0, "não pode ser negativo")
     checar(
         "interacoes.confirmacoes_por_relato",
         lambda v: eh_numero(v) and v >= 0,
