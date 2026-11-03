@@ -4,9 +4,14 @@
 
 ## Requisito ligado
 
-<!-- Ex.: RF03, RN05, RD03. Feche a issue com "Fecha #N". -->
+<!--
+Ex.: RF03, RN05, RD03.
+Ligue o PR à issue com "Closes #N". A palavra-chave precisa ser em inglês
+(Closes, Fixes ou Resolves): "Fecha #N" não é reconhecido pelo GitHub, e aí a
+issue não fecha sozinha no merge nem o card anda no quadro.
+-->
 
-Fecha #
+Closes #
 
 ## Checklist
 
