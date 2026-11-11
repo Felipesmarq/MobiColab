@@ -4,7 +4,11 @@ Toda decisão sobre relatos passa por este módulo; views e API são portas fina
 sobre ele. Os números das regras vêm de `settings`.
 """
 
+import math
+
+from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db.models import Max
 from django.utils import timezone
 
 from relatos.models import Relato
@@ -75,3 +79,20 @@ def registrar_relato(
 
     relato.save()
     return relato
+
+
+def peso_do_relato(relato: Relato, agora) -> float:
+    """Peso do relato no instante `agora`, com decaimento exponencial (RN02)."""
+    confirmadas = relato.confirmacoes.filter(ainda_vale=True)
+    # Só confirmar renova o tempo; contestar não (RN02).
+    referencia = confirmadas.aggregate(ultima=Max("criado_em"))["ultima"] or relato.criado_em
+    minutos = (agora - referencia).total_seconds() / 60
+    decaimento = math.log(2) / settings.RELATO_MEIA_VIDA_MIN
+    confirmacoes = confirmadas.count()
+    contestacoes = relato.confirmacoes.filter(ainda_vale=False).count()
+    votos = (
+        1
+        + settings.RELATO_PESO_CONFIRMACAO * confirmacoes
+        - settings.RELATO_PESO_CONTESTACAO * contestacoes
+    )
+    return max(0.0, math.exp(-decaimento * minutos) * votos)
