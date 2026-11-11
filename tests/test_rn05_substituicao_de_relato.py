@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from relatos.models import Confirmacao, Lotacao, Relato
-from relatos.regras import UsuarioBloqueado, registrar_relato
+from relatos.regras import UsuarioBloqueado, UsuarioNaoAutenticado, registrar_relato
 from transporte.models import Linha, Modal, Sentido
 
 pytestmark = pytest.mark.django_db
@@ -166,3 +166,25 @@ def test_bloqueio_feito_depois_de_carregar_o_usuario_e_respeitado(agora, usuario
         registrar_relato(usuario, linha, Sentido.IDA, Lotacao.LOTADO)
 
     assert not Relato.objects.exists()
+
+
+def test_usuario_apagado_depois_de_carregado_e_nao_autenticado(agora, usuario, linha):
+    """A instância da sessão ainda tem pk, mas a conta já não existe no banco."""
+    Usuario.objects.filter(pk=usuario.pk).delete()
+
+    with pytest.raises(UsuarioNaoAutenticado):
+        registrar_relato(usuario, linha, Sentido.IDA, Lotacao.LOTADO)
+
+    assert not Relato.objects.exists()
+
+
+def test_aviso_de_substituicao_vem_do_relacionamento_substituiu(
+    agora, usuario, linha, relato_antigo
+):
+    """Contrato para a API (#14): `relato.substituiu.exists()` diz se houve substituição."""
+    sem_anterior = registrar_relato(usuario, linha, Sentido.VOLTA, Lotacao.VAZIO)
+    relato_antigo(minutos=2)
+    com_anterior = registrar_relato(usuario, linha, Sentido.IDA, Lotacao.LOTADO)
+
+    assert not sem_anterior.substituiu.exists()
+    assert com_anterior.substituiu.exists()

@@ -40,14 +40,22 @@ def registrar_relato(
     vaga_pcd: str = "",
     prefixo_veiculo: str = "",
 ) -> Relato:
-    """Valida e grava um relato (RF03, RN01).
+    """Valida e grava um relato (RF03, RN01) e aplica a substituição (RN05).
 
     Só a lotação é obrigatória. A hora do relato é a do servidor: não há parâmetro
     para o chamador informá-la.
 
+    Se o mesmo usuário já tem um relato ativo nesta linha e sentido feito há menos de
+    `RELATO_INTERVALO_MIN`, o novo o substitui: o anterior continua no banco com
+    `substituido_por` preenchido (ADR 0013). Quem chama descobre isso por
+    `relato.substituiu.exists()`, para avisar o usuário.
+
+    Tudo roda numa transação que trava a linha do usuário (PostgreSQL, `READ COMMITTED`),
+    então dois envios simultâneos do mesmo usuário não deixam dois relatos ativos na janela.
+
     Raises:
-        UsuarioNaoAutenticado: visitante sem login ou usuário ausente.
-        UsuarioBloqueado: o usuário está inativo.
+        UsuarioNaoAutenticado: visitante sem login, `None`, ou conta que já não existe.
+        UsuarioBloqueado: o usuário está inativo no banco, mesmo que a instância diga ativo.
         RelatoInvalido: algum valor está fora do domínio da RN01 ou falta linha/sentido.
     """
     if usuario is None or not usuario.is_authenticated:
@@ -62,22 +70,28 @@ def registrar_relato(
         # Trava a linha do usuário: serializa os envios dele e relê `is_active`, que a
         # instância da sessão pode ter desatualizado se a moderação bloqueou (RF07).
         # O travamento só tem efeito no PostgreSQL.
-        if not get_user_model().objects.select_for_update().get(pk=usuario.pk).is_active:
+        try:
+            atual = get_user_model().objects.select_for_update().get(pk=usuario.pk)
+        except get_user_model().DoesNotExist:
+            raise UsuarioNaoAutenticado() from None
+        if not atual.is_active:
             raise UsuarioBloqueado(usuario.pk)
         return _gravar_e_substituir(usuario, linha, sentido, lotacao, outras_dimensoes)
 
 
-def _gravar_e_substituir(usuario, linha, sentido: str, lotacao: str, outras: dict) -> Relato:
+def _gravar_e_substituir(
+    usuario, linha, sentido: str, lotacao: str, outras_dimensoes: dict
+) -> Relato:
     """Valida, grava e marca como substituídos os relatos ativos da janela (RN05)."""
-    textos = {"sentido": sentido, "lotacao": lotacao, **outras}
+    campos = {"sentido": sentido, "lotacao": lotacao, **outras_dimensoes}
     # `full_clean()` deixa passar `None` nos campos opcionais (blank=True) e o banco
     # recusa com IntegrityError; por isso a checagem de tipo vem antes.
-    erros = {campo: ["Informe um texto."] for campo, valor in textos.items() if valor is None}
+    erros = {campo: ["Informe um texto."] for campo, valor in campos.items() if valor is None}
     if erros:
         raise RelatoInvalido(erros)
 
     agora = timezone.now()
-    relato = Relato(usuario=usuario, linha=linha, criado_em=agora, **textos)
+    relato = Relato(usuario=usuario, linha=linha, criado_em=agora, **campos)
     try:
         relato.full_clean()
     except ValidationError as erro:
