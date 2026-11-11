@@ -77,7 +77,7 @@ def votar(agora):
 
 @pytest.mark.parametrize(
     ("confirmacoes", "contestacoes", "peso_esperado"),
-    [(1, 0, 1.5), (0, 1, 0.5), (2, 1, 1.5)],
+    [(1, 0, 1.5), (0, 1, 0.5), (1, 1, 1.0)],
 )
 def test_confirmacao_soma_e_contestacao_subtrai(
     relato_de, votar, agora, confirmacoes, contestacoes, peso_esperado
@@ -87,6 +87,13 @@ def test_confirmacao_soma_e_contestacao_subtrai(
     votar(relato, ainda_vale=False, quantos=contestacoes)
 
     assert peso_do_relato(relato, agora) == pytest.approx(peso_esperado)
+
+
+def test_relato_com_data_no_futuro_nao_pesa_mais_que_um(relato_de, agora):
+    """Diferença de relógio: `agora` anterior ao relato não pode inflar o peso acima de 1."""
+    relato = relato_de(-10)
+
+    assert peso_do_relato(relato, agora) == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize("contestacoes", [2, 3])

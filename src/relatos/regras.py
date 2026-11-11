@@ -5,6 +5,7 @@ sobre ele. Os números das regras vêm de `settings`.
 """
 
 import math
+from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -81,12 +82,12 @@ def registrar_relato(
     return relato
 
 
-def peso_do_relato(relato: Relato, agora) -> float:
+def peso_do_relato(relato: Relato, agora: datetime) -> float:
     """Peso do relato no instante `agora`, com decaimento exponencial (RN02)."""
     confirmadas = relato.confirmacoes.filter(ainda_vale=True)
     # Só confirmar renova o tempo; contestar não (RN02).
     referencia = confirmadas.aggregate(ultima=Max("criado_em"))["ultima"] or relato.criado_em
-    minutos = (agora - referencia).total_seconds() / 60
+    minutos = max(0.0, (agora - referencia).total_seconds() / 60)
     decaimento = math.log(2) / settings.RELATO_MEIA_VIDA_MIN
     confirmacoes = confirmadas.count()
     contestacoes = relato.confirmacoes.filter(ainda_vale=False).count()
