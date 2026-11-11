@@ -30,6 +30,7 @@ Cada arquivo registra uma decisão: contexto, decisão, alternativas e consequê
 | 0024 | [Organização do repositório por frente de trabalho](0024-organizacao-do-repositorio.md) | aceita |
 | 0025 | [Trilha de dados como app Django em `dados/`](0025-trilha-de-dados-como-app-django.md) | aceita |
 | 0026 | [Desenho do pipeline bronze → prata → ouro](0026-desenho-do-pipeline.md) | aceita |
+| 0028 | [Concorrência e erros do `registrar_relato`](0028-concorrencia-e-erros-do-registrar-relato.md) | aceita |
 
 ## Modelo
 
