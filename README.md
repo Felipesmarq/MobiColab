@@ -44,6 +44,19 @@ uv run python manage.py migrate
 uv run python manage.py runserver
 ```
 
+## Estilos (Tailwind)
+
+O CSS vem do Tailwind CLI standalone, sem Node ([ADR 0027](docs/decisoes/0027-tailwind-cli-standalone-e-htmx.md)). O arquivo gerado, `src/static/css/tailwind.css`, **fica versionado**: rodar o app e os testes não exige nada além do `uv sync`.
+
+Só precisa regenerar quem mexer em classes dos templates (em `src/templates/`) ou em `tailwind/entrada.css`:
+
+```bash
+python scripts/tailwind.py           # gera o CSS uma vez
+python scripts/tailwind.py --watch   # regenera ao salvar
+```
+
+Na primeira execução o script baixa o binário para `.tools/` (ignorado pelo git). Depois de regenerar, **commite o `tailwind.css`**; esquecer isso deixa a página sem o estilo novo.
+
 ## Testes e qualidade
 
 ```bash
