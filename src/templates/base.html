@@ -1,0 +1,50 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-br" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}MobiColab{% endblock %} · MobiColab</title>
+  <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+  <script src="{% static 'js/htmx.min.js' %}" defer></script>
+</head>
+<body class="min-h-full flex flex-col bg-slate-50 text-slate-900 antialiased"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <a href="#conteudo"
+     class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:text-blue-900">
+    Pular para o conteúdo
+  </a>
+
+  <header class="bg-blue-900 text-white">
+    <div class="mx-auto flex max-w-xl items-center px-4 py-3">
+      <a href="{% url 'inicio' %}" class="text-lg font-semibold">MobiColab</a>
+    </div>
+  </header>
+
+  <main id="conteudo" class="mx-auto w-full max-w-xl flex-1 px-4 py-6 pb-24">
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  {# Menu na base da tela: alcançável com o polegar, uma mão só (RNF01). #}
+  <nav aria-label="Principal"
+       class="fixed inset-x-0 bottom-0 border-t border-slate-300 bg-white">
+    <ul class="mx-auto flex max-w-xl">
+      {% block menu %}
+      <li class="flex-1">
+        <a href="{% url 'inicio' %}"
+           {% if request.resolver_match.url_name == 'inicio' %}aria-current="page"{% endif %}
+           class="flex min-h-14 items-center justify-center px-2 text-sm font-medium text-blue-900 aria-[current=page]:bg-blue-50 aria-[current=page]:font-bold">
+          Início
+        </a>
+      </li>
+      <li class="flex-1">
+        {# Painel ainda não tem destino; passa a ter quando o dashboard existir. #}
+        <a role="link" aria-disabled="true"
+           class="flex min-h-14 items-center justify-center px-2 text-sm font-medium text-slate-600">
+          Painel
+        </a>
+      </li>
+      {% endblock %}
+    </ul>
+  </nav>
+</body>
+</html>

@@ -28,3 +28,6 @@ media/
 # Arquivos de fontes externas e saídas geradas (dados/externos/README.md explica)
 dados/externos/*
 !dados/externos/README.md
+
+# Binário do Tailwind CLI (scripts/tailwind.py baixa)
+.tools/
