@@ -5,10 +5,12 @@ sobre ele. Os números das regras vêm de `settings`.
 """
 
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
@@ -38,47 +40,73 @@ def registrar_relato(
     vaga_pcd: str = "",
     prefixo_veiculo: str = "",
 ) -> Relato:
-    """Valida e grava um relato (RF03, RN01).
+    """Valida e grava um relato (RF03, RN01) e aplica a substituição (RN05).
 
     Só a lotação é obrigatória. A hora do relato é a do servidor: não há parâmetro
     para o chamador informá-la.
 
+    Se o mesmo usuário já tem um relato ativo nesta linha e sentido feito há menos de
+    `RELATO_INTERVALO_MIN`, o novo o substitui: o anterior continua no banco com
+    `substituido_por` preenchido (ADR 0013). Quem chama descobre isso por
+    `relato.substituiu.exists()`, para avisar o usuário.
+
+    Tudo roda numa transação que trava a linha do usuário (PostgreSQL, `READ COMMITTED`),
+    então dois envios simultâneos do mesmo usuário não deixam dois relatos ativos na janela.
+
     Raises:
-        UsuarioNaoAutenticado: visitante sem login ou usuário ausente.
-        UsuarioBloqueado: o usuário está inativo.
+        UsuarioNaoAutenticado: visitante sem login, `None`, ou conta que já não existe.
+        UsuarioBloqueado: o usuário está inativo no banco, mesmo que a instância diga ativo.
         RelatoInvalido: algum valor está fora do domínio da RN01 ou falta linha/sentido.
     """
     if usuario is None or not usuario.is_authenticated:
         raise UsuarioNaoAutenticado()
-    if not usuario.is_active:
-        raise UsuarioBloqueado(usuario.pk)
-
-    textos = {
-        "sentido": sentido,
-        "lotacao": lotacao,
+    outras_dimensoes = {
         "conforto_termico": conforto_termico,
         "ar_condicionado": ar_condicionado,
         "vaga_pcd": vaga_pcd,
         "prefixo_veiculo": prefixo_veiculo,
     }
+    with transaction.atomic():
+        # Trava a linha do usuário: serializa os envios dele e relê `is_active`, que a
+        # instância da sessão pode ter desatualizado se a moderação bloqueou (RF07).
+        # O travamento só tem efeito no PostgreSQL.
+        try:
+            atual = get_user_model().objects.select_for_update().get(pk=usuario.pk)
+        except get_user_model().DoesNotExist:
+            raise UsuarioNaoAutenticado() from None
+        if not atual.is_active:
+            raise UsuarioBloqueado(usuario.pk)
+        return _gravar_e_substituir(usuario, linha, sentido, lotacao, outras_dimensoes)
+
+
+def _gravar_e_substituir(
+    usuario, linha, sentido: str, lotacao: str, outras_dimensoes: dict
+) -> Relato:
+    """Valida, grava e marca como substituídos os relatos ativos da janela (RN05)."""
+    campos = {"sentido": sentido, "lotacao": lotacao, **outras_dimensoes}
     # `full_clean()` deixa passar `None` nos campos opcionais (blank=True) e o banco
     # recusa com IntegrityError; por isso a checagem de tipo vem antes.
-    erros = {campo: ["Informe um texto."] for campo, valor in textos.items() if valor is None}
+    erros = {campo: ["Informe um texto."] for campo, valor in campos.items() if valor is None}
     if erros:
         raise RelatoInvalido(erros)
 
-    relato = Relato(
-        usuario=usuario,
-        linha=linha,
-        criado_em=timezone.now(),
-        **textos,
-    )
+    agora = timezone.now()
+    relato = Relato(usuario=usuario, linha=linha, criado_em=agora, **campos)
     try:
         relato.full_clean()
     except ValidationError as erro:
         raise RelatoInvalido(erro.message_dict) from erro
 
     relato.save()
+    inicio_da_janela = agora - timedelta(minutes=settings.RELATO_INTERVALO_MIN)
+    Relato.objects.filter(
+        usuario=usuario,
+        linha=linha,
+        sentido=sentido,
+        criado_em__gt=inicio_da_janela,
+        substituido_por__isnull=True,
+        removido_em__isnull=True,
+    ).exclude(pk=relato.pk).update(substituido_por=relato)
     return relato
 
 
