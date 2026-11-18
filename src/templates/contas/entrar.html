@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block titulo %}Entrar{% endblock %}
+
+{% block conteudo %}
+<h1 class="text-2xl font-bold">Entrar</h1>
+<p class="mt-2 text-slate-700">Entre para enviar ou confirmar relatos.</p>
+<form method="post" class="mt-6 space-y-4">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ next }}">
+  {% if form.non_field_errors %}
+    <p class="rounded border border-red-700 bg-white p-3 text-red-700" role="alert">
+      E-mail ou senha inválidos.
+    </p>
+  {% endif %}
+  <div>
+    <label for="{{ form.username.id_for_label }}" class="block font-semibold">E-mail</label>
+    <input id="{{ form.username.id_for_label }}" name="{{ form.username.html_name }}" type="email"
+           autocomplete="email" required
+           class="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2">
+  </div>
+  <div>
+    <label for="{{ form.password.id_for_label }}" class="block font-semibold">Senha</label>
+    <input id="{{ form.password.id_for_label }}" name="{{ form.password.html_name }}" type="password"
+           autocomplete="current-password" required
+           class="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2">
+  </div>
+  <button type="submit" class="min-h-12 w-full rounded bg-blue-900 px-4 py-2 font-semibold text-white">
+    Entrar
+  </button>
+</form>
+<p class="mt-4 text-slate-700">Ainda não tem conta? <a class="text-blue-900 underline" href="{% url 'cadastro' %}">Cadastre-se</a>.</p>
+{% endblock %}
