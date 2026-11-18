@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block titulo %}Enviar relato{% endblock %}
 
@@ -7,9 +8,18 @@
 <h1 class="mt-4 text-2xl font-bold">Relatar {{ linha.codigo }} — {{ linha.nome }}</h1>
 <p class="mt-2 text-slate-700">Informe o que está acontecendo no veículo. Só a lotação é obrigatória.</p>
 
-<form method="post" class="mt-6 space-y-4">
+{% comment %}
+  RNF03: o envio vai por HTMX. Se a rede cair ou demorar, a página não recarrega,
+  os campos ficam como estavam e #erro-envio explica o que houve (envio-relato.js).
+{% endcomment %}
+<form id="formulario-relato" method="post" class="mt-6 space-y-4"
+      hx-post="{{ request.path }}" hx-target="this" hx-select="#formulario-relato"
+      hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]"
+      hx-request='{"timeout": 15000}'>
   {% csrf_token %}
   {{ formulario.sentido }}
+  <p id="erro-envio" role="alert" hidden
+     class="rounded border border-red-700 bg-white p-3 text-red-700"></p>
   {% if formulario.non_field_errors %}
     <div role="alert" class="rounded border border-red-700 bg-white p-3 text-red-700">
       {{ formulario.non_field_errors }}
@@ -24,8 +34,9 @@
       {% endfor %}
     </div>
   {% endfor %}
-  <button type="submit" class="min-h-12 w-full rounded bg-blue-900 px-4 py-2 font-semibold text-white">
+  <button type="submit" class="min-h-12 w-full rounded bg-blue-900 px-4 py-2 font-semibold text-white disabled:opacity-60">
     Enviar relato
   </button>
 </form>
+<script src="{% static 'js/envio-relato.js' %}" defer></script>
 {% endblock %}
