@@ -160,7 +160,7 @@ Cada entregável de CC vira um requisito com artefato no repositório e critéri
 | --- | --- | --- | --- |
 | Dados mockados | mesmo esquema dos relatos | Script em `dados/mock/` | **Fonte do MVP** — ver regras abaixo |
 | GTFS oficial do Grande Recife | linhas, operadoras, paradas e itinerários (ônibus e metrô) | GTFS estático (ZIP) | **Em uso no MVP**, validado (ADR 0029) |
-| INMET, estação Recife | temperatura horária | CSV | Validar — dado real para cruzar com o mock |
+| INMET, estação A301 (Recife) | temperatura horária | CSV | **Validado** (RD02, seção 1.2); medições de 21/05/2026 em diante |
 | Frota climatizada por linha | se a linha opera com ar | A pedir à Prefeitura | Decisão futura (seção 12) |
 | Relatos de usuários reais | lotação, clima, ar, vaga PCD por linha e hora | PostgreSQL | Após o lançamento; coleta piloto é decisão futura |
 

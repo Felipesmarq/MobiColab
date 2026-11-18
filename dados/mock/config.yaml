@@ -82,8 +82,8 @@ climatizacao:
 
 conforto_termico:
   temperatura_referencia_c:
-    valor: 27.0
-    fonte: "Ordem de grandeza da temperatura média de Recife (INMET, normais climatológicas). Conferir na validação da série do INMET (issue #26)."
+    valor: 27.3
+    fonte: "INMET A301, outubro/2026: temperatura média do mês. É a temperatura em que valem as probabilidades de 'quente' abaixo."
   sem_ar:
     valor: {prob_quente: 0.55, aumento_por_grau: 0.07, prob_frio: 0.02}
     fonte: "Suposição alinhada à H3 (RD01): sem ar, 'quente' cresce com a temperatura. prob_quente vale na temperatura de referência e muda aumento_por_grau a cada °C."
@@ -93,20 +93,20 @@ conforto_termico:
 
 temperatura:
   media_diaria_c:
-    valor: 27.0
-    fonte: "Ordem de grandeza da normal climatológica de Recife (INMET). Temperatura sintética até a série horária real do INMET entrar (issue #26)."
+    valor: 27.3
+    fonte: "INMET, estação A301 (Recife): média das médias diárias de outubro/2026. Usada só nas horas sem medição real; com o INMET em dados/externos/temperatura/, o gerador usa a temperatura medida (issue #26)."
   amplitude_diaria_c:
     valor: 3.5
-    fonte: "Suposição de ordem de grandeza: metade da diferença entre a máxima e a mínima do dia em cidade litorânea tropical. Conferir na issue #26."
+    fonte: "INMET A301, outubro/2026: média de (máxima − mínima) / 2 de cada dia = 3,49 °C."
   hora_mais_quente:
-    valor: 13
-    fonte: "Suposição: pico de temperatura no início da tarde."
+    valor: 12
+    fonte: "INMET A301, outubro/2026: hora local com a maior temperatura média."
   variacao_entre_dias_c:
-    valor: 1.0
-    fonte: "Suposição: desvio-padrão da média diária entre dias."
+    valor: 0.6
+    fonte: "INMET A301, outubro/2026: desvio-padrão das médias diárias = 0,59 °C."
   ruido_horario_c:
-    valor: 0.5
-    fonte: "Suposição: desvio-padrão do ruído de cada hora."
+    valor: 0.8
+    fonte: "INMET A301, outubro/2026: desvio-padrão do que sobra de cada hora depois de tirar a média do dia e o perfil horário = 0,84 °C."
 
 vaga_pcd:
   prob_ocupada_por_lotacao:

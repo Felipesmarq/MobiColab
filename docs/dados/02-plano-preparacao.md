@@ -11,7 +11,7 @@ Este documento diz **de onde vem cada dado, como ele falta e o que fazemos com e
 | **Relatos mockados** (`dados/mock/`) | Usuários, relatos (com substituições e remoções) e confirmações, no mesmo esquema do app | Gravados no banco do app por `manage.py gerar_mock`; parâmetros em `config.yaml` | 28 dias terminando na data pedida (`periodo.dias`, `--fim`) | **Validado** pelos testes do gerador (`tests/test_rd02_mock_*.py`): RN05, RN06 e padrões programados conferidos | H1–H4 no MVP ([ADR 0006](../decisoes/0006-mvp-sobre-dados-mockados.md)) |
 | **Linhas e paradas de desenvolvimento** (`src/transporte/fixtures/linhas_dev.json`) | 5 linhas (ônibus, BRT, metrô) e 9 paradas, com itinerário | JSON (fixture do Django) | Retrato fixo, sem data | **Aproximado**: nomes e destinos reais, coordenadas aproximadas. Serve só para desenvolvimento e testes | Dimensão de linha até a importação real |
 | **GTFS oficial do Grande Recife** ([ADR 0029](../decisoes/0029-gtfs-oficial-do-grande-recife.md)) | 400 linhas, 11 operadoras, 7.237 paradas e itinerários de ônibus, metrô e VLT | GTFS estático (ZIP com 12 arquivos), importado por `manage.py importar_gtfs` | Versão `v2026.11.16`; calendário de 01/05/2020 a 16/11/2027 | **Validado** em 18/11/2026 (#25), com as ressalvas da seção 1.1 | Dimensões de linha, operadora (H2) e terminal (H1) |
-| **INMET, estação Recife** | Temperatura horária | CSV em `dados/externos/temperatura/` (`data_hora`, `temperatura_c`, `fonte`) | **A preencher na #26** (mesmo período do mock) | **Pendente** (#26): conferir estação, fuso (UTC), lacunas e faixa de valores | H3 e calibração do mock; até lá, a temperatura sintética do mock |
+| **INMET, estação A301 (Recife)** | Temperatura horária (bulbo seco) | CSV do INMET (latin-1, `;`, vírgula decimal, hora UTC), convertido por `manage.py importar_inmet` para `dados/externos/temperatura/inmet_A301.csv` | Arquivo de 01/01 a 31/10/2026; **medições de 21/05 a 31/10/2026** (3.917 horas) | **Validado** em 18/11/2026 (#26), seção 1.2 | H3 e calibração do mock; o gerador usa a temperatura medida quando existe |
 | Frota climatizada por linha | Se a linha opera com ar | A pedir à Prefeitura | — | Não solicitado (decisão futura, spec seção 12) | H2, H3 e calibração |
 | Relatos de usuários reais | Os mesmos campos do mock | PostgreSQL (app) | Depois do lançamento | Não se aplica no MVP | Repetir H1–H4 com dados reais |
 
@@ -45,6 +45,33 @@ Este documento diz **de onde vem cada dado, como ele falta e o que fazemos com e
 | Memória da importação | cerca de 2 GB | Funciona; otimizar lendo o `stop_times.txt` em fluxo |
 
 **Status: validado.** A fonte serve para o MVP. Os limites (BRT, nomes de parada) são declarados nas análises.
+
+### 1.2 Validação da temperatura do INMET (#26)
+
+| Item | Resultado |
+| --- | --- |
+| Origem | Dados históricos do INMET, arquivo anual `2026.zip` (`portal.inmet.gov.br/uploads/dadoshistoricos/2026.zip`, 81,8 MB, 634 estações, "até 31/10/2026"); estação automática **A301 – Recife** (lat −8,019; lon −34,944; altitude 10 m) |
+| Download | 18/11/2026 pelo navegador (o portal recusa clientes automáticos); SHA-256 do ZIP `e50640dee9556273fcdf02874fc88518c5a82a377e3780eb0fcdf202cb9006fd` |
+| Formato | CSV `INMET_NE_PE_A301_RECIFE_01-01-2026_A_31-10-2026.CSV`: latin-1, `;`, vírgula decimal, 8 linhas de metadados, `Data` `AAAA/MM/DD`, `Hora UTC` `HHMM UTC`, hora sem medição vazia. Usamos a coluna `TEMPERATURA DO AR - BULBO SECO, HORARIA (°C)` |
+| Fuso | UTC no arquivo; convertido para America/Recife só na prata (L1) |
+| Faixa de valores | 19,0 a 32,6 °C; média de 25,9 °C. Nenhum valor fora do plausível para Recife |
+| Conversão | `python manage.py importar_inmet ~/Downloads/2026.zip` (aceita o ZIP anual ou o CSV) grava `dados/externos/temperatura/inmet_A301.csv` no formato da bronze e imprime as lacunas |
+
+**Lacunas medidas** (período do arquivo: 7.296 horas):
+
+| Lacuna | Horas | Tratamento (L11) |
+| --- | --- | --- |
+| Estação sem medir de 01/01 a 21/05/2026 | 3.377 | Fica ausente (`fonte = ausente`). Não afeta o MVP: o mock e a EDA usam outubro e novembro |
+| 2 lacunas de 1 h entre 21/05 e 31/10 | 2 | Interpoladas na prata |
+| Depois de 31/10/2026 | — | O arquivo anual só vai até 31/10. Horas posteriores usam a temperatura sintética do mock, calibrada com outubro |
+
+**Regra de interpolação: confirmada em até 2 h.** No período com medição, todas as lacunas têm 1 h, e a temperatura varia em média menos de 1 °C de uma hora para a outra (ruído de 0,84 °C em outubro). A falha longa do início do ano é de equipamento, sem relação com a temperatura (MCAR), e não deve ser interpolada.
+
+**Calibração do mock** (outubro/2026): média de 27,3 °C (antes 27,0), semi-amplitude de 3,49 °C (antes 3,5), hora mais quente 12h (antes 13h), desvio entre dias de 0,59 °C (antes 1,0) e ruído horário de 0,84 °C (antes 0,5).
+
+Além disso, **o gerador passa a usar a temperatura medida** quando há arquivo real em `dados/externos/temperatura/`. O conforto térmico do mock segue então a mesma temperatura que a prata mostra: com outubro do INMET, 645 das 672 horas do mock são reais, e a associação temperatura × "quente" (H3) segue forte (Spearman ρ = 0,76).
+
+**Status: validado.**
 
 ## 2. Variáveis e mecanismo de falta
 
@@ -95,7 +122,7 @@ Cada parâmetro está documentado em [`dados/mock/config.yaml`](../../dados/mock
 | Grupo | O que controla | Fonte real | Suposição do grupo |
 | --- | --- | --- | --- |
 | `climatizacao.fracao_frota_com_ar` | 16,3% dos veículos com ar | **Grande Recife**: 401 de 2.462 ônibus (RD01) | — |
-| `temperatura`, `conforto_termico.temperatura_referencia` | Temperatura média de 27 °C, amplitude diária | Ordem de grandeza do INMET; a conferir na #26 | Amplitude, hora do pico, ruído |
+| `temperatura`, `conforto_termico.temperatura_referencia` | Média de 27,3 °C, semi-amplitude de 3,5 °C, pico às 12h, variação entre dias e ruído | **INMET A301, outubro/2026** (#26). Só vale nas horas sem medição: com o INMET presente, o gerador usa a temperatura real | — |
 | `volume`, `lotacao` | Perfil horário, picos 6–8h e 17–19h, efeito dos terminais | — | Sim, alinhado à H1; substituir pela demanda por linha da Prefeitura |
 | `climatizacao.prob_falha*` | 25% de falha média do ar, variando entre linhas | — | Sim, alinhado à H2 |
 | `conforto_termico` | "Quente" cresce com a temperatura, mais sem ar | — | Sim, alinhado à H3 |
@@ -118,5 +145,5 @@ Cada parâmetro está documentado em [`dados/mock/config.yaml`](../../dados/mock
 ## 6. Pendências
 
 1. ~~**#25:** validar o GTFS~~ (feito, seção 1.1). Falta a lista de linhas BRT.
-2. **#26:** validar a série do INMET, preencher período e status, e recalibrar `temperatura` no `config.yaml`.
+2. ~~**#26:** validar a série do INMET~~ (feito, seção 1.2). O arquivo anual só vai até 31/10: baixar de novo quando o INMET publicar novembro.
 3. **EDA (RD04):** confirmar ou ajustar estas decisões. O que mudar volta para este documento e para o pipeline.
