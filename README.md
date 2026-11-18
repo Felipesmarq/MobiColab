@@ -34,6 +34,18 @@ docker compose exec web python manage.py createsuperuser
 docker compose exec web python manage.py loaddata linhas_dev
 ```
 
+### Importar linhas, paradas e itinerários
+
+O importador lê um arquivo ZIP de GTFS estático (`routes.txt`, `stops.txt`,
+`trips.txt` e `stop_times.txt`) e pode ser executado novamente para atualizar
+os registros identificados pelos IDs do feed:
+
+```bash
+docker compose exec web python manage.py importar_gtfs /app/dados/externos/feed.zip
+```
+
+Coloque o arquivo ZIP em `dados/externos/feed.zip` antes de executar o comando.
+
 ### Sem Docker (opcional)
 
 Com [uv](https://docs.astral.sh/uv/) instalado e um PostgreSQL 16 acessível (ajuste `DATABASE_URL` no `.env`):
