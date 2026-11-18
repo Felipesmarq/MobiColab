@@ -147,7 +147,12 @@ def votar_relato(request, pk):
     except UsuarioBloqueado:
         messages.error(request, "Sua conta está bloqueada e não pode votar.")
     else:
-        voto = "confirmado" if confirmacao.ainda_vale else "contestado"
-        messages.success(request, f"Relato {voto}. Obrigado por colaborar!")
+        if confirmacao.ainda_vale:
+            messages.success(request, "Relato confirmado. Obrigado por colaborar!")
+        else:
+            # RF05: depois de contestar, a pessoa pode relatar como está agora.
+            messages.success(
+                request, "Relato contestado. Se estiver no veículo, envie como está agora."
+            )
     destino = reverse("linha_status", args=[relato.linha_id])
     return redirect(f"{destino}?{urlencode({'sentido': relato.sentido})}")
