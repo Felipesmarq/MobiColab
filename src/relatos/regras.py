@@ -11,10 +11,11 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Prefetch
 from django.utils import timezone
 
-from relatos.models import Relato
+from relatos.models import Confirmacao, Relato
+from transporte.models import Sentido
 
 
 class UsuarioNaoAutenticado(Exception):
@@ -110,18 +111,134 @@ def _gravar_e_substituir(
     return relato
 
 
+def confirmar_relato(usuario, relato: Relato, ainda_vale: bool) -> Confirmacao:
+    """Registra um voto único em relato ativo, exceto pelo próprio autor (RF05, RN06)."""
+    if usuario is None or not usuario.is_authenticated:
+        raise UsuarioNaoAutenticado()
+    if not isinstance(ainda_vale, bool):
+        raise RelatoInvalido({"ainda_vale": ["Informe se o relato ainda vale."]})
+    if not isinstance(relato, Relato) or not relato.pk:
+        raise RelatoInvalido({"relato": ["Relato não encontrado."]})
+
+    with transaction.atomic():
+        try:
+            atual = get_user_model().objects.select_for_update().get(pk=usuario.pk)
+        except get_user_model().DoesNotExist:
+            raise UsuarioNaoAutenticado() from None
+        if not atual.is_active:
+            raise UsuarioBloqueado(usuario.pk)
+
+        try:
+            alvo = Relato.objects.select_for_update().get(pk=relato.pk)
+        except Relato.DoesNotExist:
+            raise RelatoInvalido({"relato": ["Relato não encontrado."]}) from None
+
+        agora = timezone.now()
+        if alvo.usuario_id == atual.pk:
+            raise RelatoInvalido({"relato": ["Você não pode votar no próprio relato."]})
+        if (
+            alvo.removido_em is not None
+            or alvo.substituido_por_id is not None
+            or alvo.criado_em < agora - timedelta(minutes=settings.RELATO_VALIDADE_MIN)
+        ):
+            raise RelatoInvalido({"relato": ["Este relato não está mais ativo."]})
+
+        confirmacao, criada = Confirmacao.objects.get_or_create(
+            relato=alvo,
+            usuario=atual,
+            defaults={"ainda_vale": ainda_vale},
+        )
+        if not criada:
+            raise RelatoInvalido({"relato": ["Você já confirmou ou contestou este relato."]})
+        return confirmacao
+
+
+def status_linha(linha, sentido: str, agora: datetime | None = None) -> dict:
+    """Calcula valores predominantes, contagem e idade por dimensão (RF04, RN02–RN04)."""
+    erros = {}
+    if linha is None or not getattr(linha, "pk", None):
+        erros["linha"] = ["Informe uma linha."]
+    if sentido not in Sentido.values:
+        erros["sentido"] = ["Informe um sentido válido."]
+    if erros:
+        raise RelatoInvalido(erros)
+
+    agora = agora or timezone.now()
+    relatos = Relato.objects.filter(
+        linha=linha,
+        sentido=sentido,
+        criado_em__gte=agora - timedelta(minutes=settings.RELATO_VALIDADE_MIN),
+        substituido_por__isnull=True,
+        removido_em__isnull=True,
+    ).prefetch_related(
+        Prefetch(
+            "confirmacoes",
+            queryset=Confirmacao.objects.only("relato_id", "ainda_vale", "criado_em"),
+        )
+    )
+    por_dimensao = {
+        "lotacao": {},
+        "conforto_termico": {},
+        "ar_condicionado": {},
+        "vaga_pcd": {},
+    }
+
+    for relato in relatos:
+        peso = _peso_com_confirmacoes(relato, agora, list(relato.confirmacoes.all()))
+        if peso <= 0:
+            continue
+        for campo, totais in por_dimensao.items():
+            valor = getattr(relato, campo)
+            if valor:
+                estatistica = totais.setdefault(
+                    valor, {"peso": 0.0, "relatos": 0, "ultimo_em": relato.criado_em}
+                )
+                estatistica["peso"] += peso
+                estatistica["relatos"] += 1
+                if relato.criado_em > estatistica["ultimo_em"]:
+                    estatistica["ultimo_em"] = relato.criado_em
+
+    resultado = {}
+    for campo, totais in por_dimensao.items():
+        melhor_valor = max(totais, key=lambda valor: totais[valor]["peso"], default=None)
+        total_peso = sum(item["peso"] for item in totais.values())
+        quantidade = sum(item["relatos"] for item in totais.values())
+        ultimo_em = max((item["ultimo_em"] for item in totais.values()), default=None)
+        if total_peso < settings.PESO_MINIMO:
+            resultado[campo] = {
+                "valor": None,
+                "relatos": quantidade,
+                "ultimo_em": ultimo_em,
+                "minutos_atras": (
+                    max(0, int((agora - ultimo_em).total_seconds() // 60)) if ultimo_em else None
+                ),
+            }
+            continue
+        resultado[campo] = {
+            "valor": melhor_valor,
+            "relatos": quantidade,
+            "ultimo_em": ultimo_em,
+            "minutos_atras": max(0, int((agora - ultimo_em).total_seconds() // 60)),
+        }
+    return resultado
+
+
 def peso_do_relato(relato: Relato, agora: datetime) -> float:
     """Peso do relato no instante `agora`, com decaimento exponencial (RN02)."""
-    confirmadas = relato.confirmacoes.filter(ainda_vale=True)
+    return _peso_com_confirmacoes(relato, agora, list(relato.confirmacoes.all()))
+
+
+def _peso_com_confirmacoes(
+    relato: Relato, agora: datetime, confirmacoes: list[Confirmacao]
+) -> float:
+    confirmadas = [voto for voto in confirmacoes if voto.ainda_vale]
     # Só confirmar renova o tempo; contestar não (RN02).
-    referencia = confirmadas.aggregate(ultima=Max("criado_em"))["ultima"] or relato.criado_em
+    referencia = max((voto.criado_em for voto in confirmadas), default=relato.criado_em)
     minutos = max(0.0, (agora - referencia).total_seconds() / 60)
     decaimento = math.log(2) / settings.RELATO_MEIA_VIDA_MIN
-    confirmacoes = confirmadas.count()
-    contestacoes = relato.confirmacoes.filter(ainda_vale=False).count()
     votos = (
         1
-        + settings.RELATO_PESO_CONFIRMACAO * confirmacoes
-        - settings.RELATO_PESO_CONTESTACAO * contestacoes
+        + settings.RELATO_PESO_CONFIRMACAO * len(confirmadas)
+        - settings.RELATO_PESO_CONTESTACAO * (len(confirmacoes) - len(confirmadas))
     )
     return max(0.0, math.exp(-decaimento * minutos) * votos)

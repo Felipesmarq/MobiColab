@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ linha.codigo }} — Status{% endblock %}
+
+{% block conteudo %}
+<p><a class="font-semibold text-blue-900 underline" href="{% url 'inicio' %}">Buscar outra linha</a></p>
+<h1 class="mt-4 text-2xl font-bold">{{ linha.codigo }} — {{ linha.nome }}</h1>
+<p class="mt-1 text-slate-700">{{ linha.get_modal_display }}{% if linha.operadora %} · {{ linha.operadora }}{% endif %}</p>
+
+<nav aria-label="Sentido da linha" class="mt-4 flex flex-wrap gap-3">
+  {% for chave, rotulo in sentidos %}
+    <a href="?sentido={{ chave }}"
+       {% if sentido == chave %}aria-current="page"{% endif %}
+       class="rounded border border-slate-300 bg-white px-3 py-2 font-semibold text-blue-900 aria-[current=page]:bg-blue-50">
+      {{ rotulo }} · {% if chave == "ida" %}{{ linha.destino_ida }}{% else %}{{ linha.destino_volta|default:linha.destino_ida }}{% endif %}
+    </a>
+  {% endfor %}
+</nav>
+
+<section class="mt-6" aria-labelledby="status-titulo">
+  <h2 id="status-titulo" class="text-lg font-bold">Status agora — sentido {{ sentido }}</h2>
+  <dl class="mt-3 space-y-3">
+    {% for dimensao in dimensoes %}
+      <div class="rounded border border-slate-300 bg-white p-4">
+        <dt class="font-semibold">{{ dimensao.nome }}</dt>
+        <dd class="mt-1">{{ dimensao.valor }}</dd>
+        <dd class="mt-1 text-sm text-slate-700">
+          {{ dimensao.relatos }} relato(s)
+          {% if dimensao.minutos_atras != None %}· atualizado há {{ dimensao.minutos_atras }} min{% endif %}
+        </dd>
+      </div>
+    {% endfor %}
+  </dl>
+</section>
+
+<a href="{% url 'enviar_relato' linha.pk %}?sentido={{ sentido }}"
+   class="mt-5 block min-h-12 rounded bg-blue-900 px-4 py-3 text-center font-semibold text-white">
+  Enviar relato
+</a>
+
+<section class="mt-8" aria-labelledby="relatos-titulo">
+  <h2 id="relatos-titulo" class="text-lg font-bold">Relatos recentes</h2>
+  {% if not relatos %}
+    <p class="mt-2 rounded bg-white p-4 text-slate-700">Sem informação recente. Seja a primeira pessoa a relatar.</p>
+  {% endif %}
+  <ul class="mt-3 space-y-3">
+    {% for relato in relatos %}
+      <li class="rounded border border-slate-300 bg-white p-4">
+        <p class="font-semibold">{{ relato.get_lotacao_display }}</p>
+        <p class="mt-1 text-sm text-slate-700">Enviado {{ relato.criado_em|timesince }} atrás</p>
+        {% if not user.is_authenticated %}
+          <p class="mt-2 text-sm"><a class="text-blue-900 underline" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Entre para confirmar ou contestar.</a></p>
+        {% elif user.pk == relato.usuario_id %}
+          <p class="mt-2 text-sm text-slate-700">Seu relato</p>
+        {% elif relato.votou %}
+          <p class="mt-2 text-sm text-slate-700">Você já votou neste relato.</p>
+        {% else %}
+          <div class="mt-3 flex flex-wrap gap-2">
+            <form method="post" action="{% url 'votar_relato' relato.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="ainda_vale" value="true">
+              <button class="min-h-11 rounded border border-slate-300 px-3 py-2 font-semibold" type="submit">
+                Ainda está assim
+              </button>
+            </form>
+            <form method="post" action="{% url 'votar_relato' relato.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="ainda_vale" value="false">
+              <button class="min-h-11 rounded border border-slate-300 px-3 py-2 font-semibold" type="submit">
+                Não está mais assim
+              </button>
+            </form>
+          </div>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}
