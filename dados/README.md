@@ -7,6 +7,7 @@ Tudo o que a equipe de CC produz em código: gerador de dados mockados, pipeline
 | [`mock/`](mock/) | `config.yaml` com os parâmetros do gerador, cada um com a fonte que o justifica | RD02 |
 | `externos/` | Arquivos de fontes externas (ex.: temperatura) lidos pela camada bronze. Não vão para o git | RD02, RD03 |
 | [`pipeline/`](pipeline/) | Pipeline bronze → prata → ouro e o dicionário de dados (`esquemas.py`) | RD03 |
+| [`notebooks/`](notebooks/) | `03-eda.ipynb`: análise exploratória sobre a camada ouro | RD04 |
 | `management/commands/` | Comandos do `manage.py` da trilha (`gerar_mock`, `pipeline`) | RD02, RD03 |
 
 ## Dados mockados
@@ -114,3 +115,14 @@ Rodam ao fim de toda execução do `pipeline` ([`pipeline/qualidade.py`](pipelin
 | Privacidade | Nenhuma tabela da ouro declara identificador de relato ou de usuário |
 
 No CI, depois do pytest, um passo gera 7 dias de mock no PostgreSQL e roda o pipeline de ponta a ponta: se a qualidade falhar, o build falha.
+
+## Notebooks
+
+As bibliotecas dos notebooks (matplotlib, SciPy, Jupyter) ficam no grupo `notebooks` do `pyproject.toml`, fora da imagem do app. Com a ouro gerada (`gerar_mock` e `pipeline`):
+
+```bash
+uv run --group notebooks jupyter execute --inplace dados/notebooks/03-eda.ipynb   # roda e salva as saídas
+uv run --group notebooks --with jupyterlab jupyter lab                           # para editar
+```
+
+O notebook lê **só a camada ouro**, pela função `ler_ouro`, e o CI o executa do zero a cada PR. Os textos de interpretação se referem à execução registrada (28 dias de mock, de 05/10 a 01/11/2026); antes de commitar outra execução, revise os textos.
