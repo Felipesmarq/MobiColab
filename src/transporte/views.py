@@ -1,10 +1,9 @@
 from django.db.models import Case, IntegerField, Q, Value, When
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import render
 
 from transporte.models import Linha
 
 RECENTES_NA_SESSAO = "linhas_recentes"
-RECENTES_MAXIMO = 5
 
 
 def inicio(request):
@@ -27,17 +26,5 @@ def inicio(request):
     return render(
         request,
         "inicio.html",
-        {"linhas": linhas, "termo": termo, "recentes": set(recentes)},
+        {"linhas": linhas, "termo": termo},
     )
-
-
-def linha_status(request, pk):
-    """Página da linha. O status agregado (RF04) entra com a issue #20."""
-    linha = get_object_or_404(Linha, pk=pk, ativa=True)
-    _lembrar_linha(request, linha.pk)
-    return render(request, "transporte/linha.html", {"linha": linha})
-
-
-def _lembrar_linha(request, pk):
-    recentes = [r for r in request.session.get(RECENTES_NA_SESSAO, []) if r != pk]
-    request.session[RECENTES_NA_SESSAO] = [pk, *recentes][:RECENTES_MAXIMO]

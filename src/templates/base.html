@@ -17,19 +17,28 @@
   <header class="bg-blue-900 text-white">
     <div class="mx-auto flex max-w-xl items-center justify-between px-4 py-3">
       <a href="{% url 'inicio' %}" class="text-lg font-semibold">MobiColab</a>
-      {% if user.is_authenticated %}
-        {# Logout é POST no Django 5 (evita sair por um link de terceiros). #}
+      {% if request.user.is_authenticated %}
         <form method="post" action="{% url 'logout' %}">
           {% csrf_token %}
           <button type="submit" class="min-h-12 px-2 text-sm font-medium underline">Sair</button>
         </form>
       {% else %}
-        <a href="{% url 'login' %}" class="flex min-h-12 items-center px-2 text-sm font-medium underline">Entrar</a>
+        <div class="flex gap-3 text-sm">
+          <a href="{% url 'login' %}" class="flex min-h-12 items-center underline">Entrar</a>
+          <a href="{% url 'cadastro' %}" class="flex min-h-12 items-center underline">Criar conta</a>
+        </div>
       {% endif %}
     </div>
   </header>
 
   <main id="conteudo" class="mx-auto w-full max-w-xl flex-1 px-4 py-6 pb-24">
+    {% if messages %}
+      <ul class="mb-4 space-y-2" aria-live="polite">
+        {% for message in messages %}
+          <li class="rounded border border-slate-300 bg-white p-3">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
     {% block conteudo %}{% endblock %}
   </main>
 
