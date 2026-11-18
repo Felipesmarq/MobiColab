@@ -12,6 +12,24 @@ from django.db import IntegrityError, transaction
 from transporte.modais import modal_do_gtfs
 from transporte.models import Linha, LinhaParada, Modal, Parada, Sentido
 
+# No feed do Grande Recife, a maioria das paradas tem só o código como nome ("130220")
+# e as nomeadas terminam com ele ("Terminal De Piedade - 010307"). Ver docs/dados/02.
+_CODIGO_NO_FIM = re.compile(r"\s+-\s+\d+$")
+_SO_CODIGO = re.compile(r"\d+")
+
+
+def _sem_codigo_no_fim(nome):
+    return _CODIGO_NO_FIM.sub("", nome).strip() or nome
+
+
+def _ultimo_nome_legivel(percurso, objetos_parada):
+    """Nome da última parada do percurso que não é só um código; None se não houver."""
+    for stop_id in reversed(percurso):
+        nome = objetos_parada[stop_id].nome
+        if not _SO_CODIGO.fullmatch(nome):
+            return nome
+    return None
+
 
 class Command(BaseCommand):
     help = "Importa linhas, paradas e itinerários de um arquivo GTFS estático (.zip)."
@@ -79,7 +97,7 @@ class Command(BaseCommand):
             if not (-90 <= lat <= 90 and -180 <= lon <= 180) or len(stop_id) > 64:
                 continue
             paradas_gtfs[stop_id] = {
-                "nome": nome[:160],
+                "nome": _sem_codigo_no_fim(nome)[:160],
                 "lat": lat.quantize(Decimal("0.000001")),
                 "lon": lon.quantize(Decimal("0.000001")),
                 "eh_terminal": linha.get("location_type") == "1"
@@ -157,7 +175,7 @@ class Command(BaseCommand):
                     percurso = [stop_id for _, stop_id in escolhido[0] if stop_id in objetos_parada]
                     if not percurso:
                         continue
-                    destinos[sentido] = objetos_parada[percurso[-1]].nome
+                    destinos[sentido] = _ultimo_nome_legivel(percurso, objetos_parada) or nome
                     percursos[sentido] = percurso
 
                 destino_ida = destinos.get(Sentido.IDA) or nome[:120]
