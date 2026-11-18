@@ -10,12 +10,41 @@ Este documento diz **de onde vem cada dado, como ele falta e o que fazemos com e
 | --- | --- | --- | --- | --- | --- |
 | **Relatos mockados** (`dados/mock/`) | Usuários, relatos (com substituições e remoções) e confirmações, no mesmo esquema do app | Gravados no banco do app por `manage.py gerar_mock`; parâmetros em `config.yaml` | 28 dias terminando na data pedida (`periodo.dias`, `--fim`) | **Validado** pelos testes do gerador (`tests/test_rd02_mock_*.py`): RN05, RN06 e padrões programados conferidos | H1–H4 no MVP ([ADR 0006](../decisoes/0006-mvp-sobre-dados-mockados.md)) |
 | **Linhas e paradas de desenvolvimento** (`src/transporte/fixtures/linhas_dev.json`) | 5 linhas (ônibus, BRT, metrô) e 9 paradas, com itinerário | JSON (fixture do Django) | Retrato fixo, sem data | **Aproximado**: nomes e destinos reais, coordenadas aproximadas. Serve só para desenvolvimento e testes | Dimensão de linha até a importação real |
-| **Dados abertos de PE / Grande Recife** (versão antiga) | Linhas, operadoras, paradas e itinerários | GTFS estático (`routes.txt`, `stops.txt`, `trips.txt`, `stop_times.txt`), importado por `manage.py importar_gtfs` | **A preencher na #25** (data de publicação do arquivo) | **Pendente** (#25): baixar, conferir contagem de linhas, operadoras, `route_type` e coordenadas | Dimensões de linha, operadora (H2) e terminal (H1) |
+| **GTFS oficial do Grande Recife** ([ADR 0029](../decisoes/0029-gtfs-oficial-do-grande-recife.md)) | 400 linhas, 11 operadoras, 7.237 paradas e itinerários de ônibus, metrô e VLT | GTFS estático (ZIP com 12 arquivos), importado por `manage.py importar_gtfs` | Versão `v2026.11.16`; calendário de 01/05/2020 a 16/11/2027 | **Validado** em 18/11/2026 (#25), com as ressalvas da seção 1.1 | Dimensões de linha, operadora (H2) e terminal (H1) |
 | **INMET, estação Recife** | Temperatura horária | CSV em `dados/externos/temperatura/` (`data_hora`, `temperatura_c`, `fonte`) | **A preencher na #26** (mesmo período do mock) | **Pendente** (#26): conferir estação, fuso (UTC), lacunas e faixa de valores | H3 e calibração do mock; até lá, a temperatura sintética do mock |
 | Frota climatizada por linha | Se a linha opera com ar | A pedir à Prefeitura | — | Não solicitado (decisão futura, spec seção 12) | H2, H3 e calibração |
 | Relatos de usuários reais | Os mesmos campos do mock | PostgreSQL (app) | Depois do lançamento | Não se aplica no MVP | Repetir H1–H4 com dados reais |
 
 **Como validar uma fonte (#25 e #26).** Para cada arquivo, registrar aqui: endereço de onde veio, data de download, período coberto, número de registros, colunas recebidas × esperadas, e o que estava fora do esperado. Só depois disso a coluna "Status" vira "Validado".
+
+### 1.1 Validação do GTFS do Grande Recife (#25)
+
+| Item | Resultado |
+| --- | --- |
+| Origem | `https://www.granderecife.pe.gov.br/gtfs/gtfs.zip`, publicado pelo Grande Recife Consórcio de Transporte (catalogado no [Transitland](https://www.transit.land/data/feeds/f-7nx-granderecife) como `f-7nx-granderecife`). Os portais de dados abertos de PE e do Recife não têm mais a versão antiga prevista no ADR 0005 |
+| Download | 18/11/2026; 38,1 MB; SHA-256 `932e8c9578345685c66f89ec018f28821638850e60839e7b8f3b6b66d2de4bb7`; arquivo modificado no servidor em 16/11/2026 |
+| Versão e período | `feed_version = v2026.11.16`; `feed_start_date` 01/05/2020, `feed_end_date` 16/11/2027 |
+| Arquivos | `agency`, `calendar`, `calendar_dates`, `fare_attributes`, `fare_rules`, `feed_info`, `routes`, `shapes`, `stops`, `stop_times` (208 MB), `transfers`, `trips`. Todos os que o importador exige estão presentes |
+| Operadoras | 11 (10 de ônibus + CBTU/Metrorec). Todas as rotas têm `agency_id` |
+| Linhas | 400: 395 ônibus (`route_type 3`), 3 metrô (`1`), 2 VLT (`0`). Nenhum `route_short_name` vazio ou repetido; nenhum código acima do limite do modelo |
+| Paradas | 7.237, todas com coordenadas dentro da RMR (lat −8,56 a −7,73; lon −35,20 a −34,82); 30 estações (`location_type 1`); nenhum `stop_id` repetido |
+| Viagens | 87.182, com `direction_id` 0 e 1 equilibrados; 8 linhas sem nenhuma viagem |
+| Importação | 398 linhas (o VLT fica de fora), 7.237 paradas e 31.786 trechos de itinerário em cerca de 13 s; rodar de novo não duplica nada |
+
+**O que estava fora do esperado, e o que fizemos:**
+
+| Achado | Tamanho | Tratamento |
+| --- | --- | --- |
+| Nome de parada é só o código ("130220") | 6.730 de 7.237 paradas (93%) | Mantido como está (é o que a fonte tem). Para o **destino**, o importador usa a última parada do percurso que tem nome, e o nome da linha se nenhuma tiver (22 linhas). Antes da correção, 228 linhas mostravam um código como destino |
+| Nomes de parada terminam com o código ("Terminal De Piedade - 010307") | Todas as paradas nomeadas | O importador tira o sufixo; o código continua em `gtfs_stop_id` |
+| `trip_headsign` é "Principal" nos ônibus | Quase todas as viagens de ônibus | Não serve de destino; ignorado |
+| BRT não é identificável | 0 linhas com "BRT" | Todas entram como ônibus. Marcar BRT exige uma lista do Grande Recife (pendência na spec, seção 12) |
+| VLT (`route_type 0`) | 2 linhas | Fora do MVP, como novo modal futuro (RNF08) |
+| Linhas sem viagem | 8 | Importadas sem itinerário; não aparecem como passando por terminal |
+| Paradas sem nenhuma linha | 234 | Importadas; não afetam a análise |
+| Memória da importação | cerca de 2 GB | Funciona; otimizar lendo o `stop_times.txt` em fluxo |
+
+**Status: validado.** A fonte serve para o MVP. Os limites (BRT, nomes de parada) são declarados nas análises.
 
 ## 2. Variáveis e mecanismo de falta
 
@@ -30,7 +59,7 @@ Antes de limpar, classificamos por que cada variável pode faltar. A decisão de
 | `ar_condicionado` | Categórica | funcionando, não funcionando, sem ar | Sim (opcional) | **MNAR provável**: quem relata o ar tende a fazê-lo quando ele está quebrado | Não imputar; taxa de falha observada fica acima da real |
 | `vaga_pcd` | Categórica | disponível, ocupada | Sim (opcional) | **MNAR provável**: depende de quem olha a vaga | Não imputar |
 | `prefixo_veiculo` | Texto | — | Sim, quase sempre | Esperado: o passageiro raramente olha o prefixo ([ADR 0003](../decisoes/0003-relato-por-linha-e-sentido.md)) | Análise por veículo só no subconjunto preenchido |
-| `operadora` (linha) | Categórica | — | Sim, se a fonte não trouxer | Falta da fonte, não do relato | H2 testada só por linha se faltar |
+| `operadora` (linha) | Categórica | 11 operadoras no GTFS | Não no GTFS oficial (100% preenchida); sim na fixture de desenvolvimento | Falta da fonte, não do relato | H2 testável por operadora com o GTFS |
 | Temperatura horária | Numérica (°C) | — | Sim, em falhas de estação | **MCAR provável**: falha de equipamento, sem relação com o valor | Interpolar só lacunas curtas |
 
 ## 3. Decisões de limpeza
@@ -48,7 +77,7 @@ Cada decisão cita a característica da variável que a justifica. Todas são ap
 | L7 | Taxa de falha do ar usa como denominador **só** funcionando + não funcionando | `ar_condicionado` | "Sem ar" não é falha, e "não informado" é MNAR; misturá-los no denominador mudaria a pergunta da H2 |
 | L8 | Taxa sem denominador fica **vazia, não zero** | Taxas da ouro | "Ninguém informou" é diferente de "ninguém viu o problema" |
 | L9 | Análise por veículo usa só o subconjunto com **prefixo preenchido** | `prefixo_veiculo` | Falta esperada e em massa (cerca de 90%); o subconjunto é pequeno e isso é declarado |
-| L10 | Operadora vazia vira **`nao_informada`** | `operadora` | Falta da fonte de linhas, não do relato; a linha continua na análise por linha |
+| L10 | Operadora vazia vira **`nao_informada`** | `operadora` | Falta da fonte de linhas, não do relato; a linha continua na análise por linha. Com o GTFS oficial não acontece; segue valendo para a fixture e para linhas cadastradas à mão |
 | L11 | Temperatura: lacunas de **até 2 h** interpoladas no tempo; maiores ficam vazias (`fonte = ausente`) | Temperatura | MCAR e variação suave de hora em hora: 2 h de interpolação têm erro pequeno; acima disso, o valor inventado pesaria na H3 |
 | L12 | Quando há duas fontes para a mesma hora, **INMET tem prioridade sobre o mock** | Temperatura | Dado real medido vale mais que o sintético |
 | L13 | Linha ganha `passa_por_terminal` por sentido, a partir das paradas com `eh_terminal` | Itinerário | H1 compara linhas que chegam ou não aos Terminais Integrados |
@@ -88,6 +117,6 @@ Cada parâmetro está documentado em [`dados/mock/config.yaml`](../../dados/mock
 
 ## 6. Pendências
 
-1. **#25:** validar o GTFS dos dados abertos e preencher período e status na seção 1.
+1. ~~**#25:** validar o GTFS~~ (feito, seção 1.1). Falta a lista de linhas BRT.
 2. **#26:** validar a série do INMET, preencher período e status, e recalibrar `temperatura` no `config.yaml`.
 3. **EDA (RD04):** confirmar ou ajustar estas decisões. O que mudar volta para este documento e para o pipeline.

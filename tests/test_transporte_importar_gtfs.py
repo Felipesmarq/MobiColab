@@ -71,3 +71,38 @@ def test_feed_incompleto_nao_importa_nada(tmp_path):
         call_command("importar_gtfs", arquivo)
 
     assert not Linha.objects.exists()
+
+
+def test_destino_usa_a_ultima_parada_com_nome_e_sem_codigo(tmp_path):
+    """No feed do Grande Recife, a maioria das paradas tem só o código como nome
+    (ex.: "130220") e as nomeadas terminam com o código ("Terminal X - 010511")."""
+    arquivo = tmp_path / "codigos.zip"
+    tabelas = {
+        "routes.txt": (
+            "route_id,route_short_name,route_long_name,route_type\nr1,018,Brasília Teimosa,3\n"
+        ),
+        "stops.txt": (
+            "stop_id,stop_name,stop_lat,stop_lon\n"
+            "010511,Terminal Brasília Teimosa - 010511,-8.08,-34.88\n"
+            "180938,Tp Cais De Sta. Rita - Embarque 08 - 180938,-8.06,-34.87\n"
+            "130220,130220,-8.05,-34.86\n"
+            "130221,130221,-8.04,-34.85\n"
+        ),
+        "trips.txt": "route_id,service_id,trip_id,direction_id\nr1,s,t1,0\nr1,s,t2,1\n",
+        "stop_times.txt": (
+            "trip_id,stop_id,stop_sequence\n"
+            "t1,010511,1\nt1,180938,2\nt1,130220,3\n"
+            "t2,130221,1\nt2,130220,2\n"
+        ),
+    }
+    with zipfile.ZipFile(arquivo, "w") as feed:
+        for nome, conteudo in tabelas.items():
+            feed.writestr(nome, conteudo)
+
+    call_command("importar_gtfs", arquivo, verbosity=0)
+
+    linha = Linha.objects.get(gtfs_route_id="r1")
+    assert linha.destino_ida == "Tp Cais De Sta. Rita - Embarque 08"
+    assert linha.destino_volta == "Brasília Teimosa"  # nenhuma parada nomeada: usa a linha
+    assert Parada.objects.get(gtfs_stop_id="010511").nome == "Terminal Brasília Teimosa"
+    assert Parada.objects.get(gtfs_stop_id="130220").nome == "130220"

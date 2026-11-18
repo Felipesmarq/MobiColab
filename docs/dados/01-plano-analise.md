@@ -35,7 +35,7 @@ Detalhamento, validação e plano de preparação ficam no RD02.
 | Fonte | Conteúdo | Formato | Uso | Situação |
 | --- | --- | --- | --- | --- |
 | Dados mockados (`dados/mock/`) | Relatos com o mesmo esquema do app | Script + `config.yaml` | H1–H4 no MVP | A construir na fase 1 |
-| Dados abertos de PE / Grande Recife (versão antiga) | Linhas, operadoras e paradas | CSV | Dimensões de linha, operadora e terminal | Em uso; a validar |
+| GTFS oficial do Grande Recife | Linhas, operadoras, paradas e itinerários | GTFS (ZIP) | Dimensões de linha, operadora e terminal | Validado no RD02 (ADR 0029) |
 | INMET, estação Recife | Temperatura horária | CSV | H3 e calibração do mock | A validar |
 | Frota climatizada por linha | Se a linha opera com ar | A pedir à Prefeitura | H2, H3 e calibração do mock | Não solicitado |
 | Relatos de usuários reais | Lotação, clima, ar e vaga PCD por linha e hora | PostgreSQL | Repetir H1–H4 com dados reais | Depois do lançamento |
@@ -44,8 +44,7 @@ Detalhamento, validação e plano de preparação ficam no RD02.
 
 - **Dados mockados.** No MVP, os relatos são gerados por script. O gerador só devolve os padrões programados nele: achados sobre mock **validam o pipeline e as visualizações, não o comportamento dos passageiros**. Toda análise sobre mock declara isso no título.
 - **Campos opcionais com viés.** Ar, conforto e vaga PCD são opcionais; quem relata o ar tende a fazê-lo quando ele está quebrado (provável MNAR). A taxa de falha da H2 tende a ser superestimada.
-- **Dados de linhas desatualizados.** A base de linhas e paradas é uma versão antiga; itinerários e operadoras podem ter mudado.
-- **Operadora pode faltar.** Se a fonte não trouxer a operadora, a H2 é testada só por linha.
+- **Dados de linhas.** O GTFS oficial é atual e traz operadora, mas não distingue BRT de ônibus e nomeia a maioria das paradas só pelo código (ver RD02 e ADR 0029).
 
 ## 5. Próximos passos
 

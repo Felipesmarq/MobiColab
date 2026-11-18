@@ -2,7 +2,7 @@
 
 - **Data:** 21/10/2026
 - **Fase:** 0
-- **Status:** aceita
+- **Status:** substituída por [0029](0029-gtfs-oficial-do-grande-recife.md)
 - **Requisitos ligados:** RD02, RF02
 
 ## Contexto
