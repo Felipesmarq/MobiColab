@@ -7,4 +7,42 @@
 <p class="mt-2 text-slate-700">
   Relatos de lotação, ar-condicionado e acessibilidade feitos por quem está viajando no Recife.
 </p>
+
+<form method="get" role="search" class="mt-6">
+  <label for="busca" class="block font-semibold">Buscar linha</label>
+  <div class="mt-1 flex gap-2">
+    <input id="busca" name="q" type="search" value="{{ termo }}" inputmode="search"
+           placeholder="Número ou nome, ex.: 060"
+           class="min-h-12 w-full rounded border border-slate-300 bg-white px-3 py-2">
+    <button type="submit" class="min-h-12 rounded bg-blue-900 px-4 py-2 font-semibold text-white">
+      Buscar
+    </button>
+  </div>
+</form>
+
+{% if linhas %}
+  <ul class="mt-6 space-y-3">
+    {% for linha in linhas %}
+      <li>
+        <a href="{% url 'linha_status' linha.pk %}"
+           class="block rounded border border-slate-300 bg-white p-3">
+          <span class="block font-semibold">{{ linha.codigo }} — {{ linha.nome }}</span>
+          <span class="mt-1 block text-sm text-slate-700">
+            {{ linha.get_modal_display }}{% if linha.pk in recentes %} · recente{% endif %}
+          </span>
+          <span class="mt-1 block text-sm text-slate-700">
+            Ida: {{ linha.destino_ida }}{% if linha.destino_volta %} · Volta: {{ linha.destino_volta }}{% endif %}
+          </span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% elif termo %}
+  <div class="mt-6 rounded border border-slate-300 bg-white p-3" role="status">
+    <p class="font-semibold">Nenhuma linha encontrada para “{{ termo }}”.</p>
+    <p class="mt-1 text-sm text-slate-700">
+      Tente buscar pelo número da linha (ex.: 060) ou por parte do nome (ex.: Piedade).
+    </p>
+  </div>
+{% endif %}
 {% endblock %}
