@@ -159,7 +159,7 @@ Cada entregável de CC vira um requisito com artefato no repositório e critéri
 | Fonte | Conteúdo | Formato | Situação |
 | --- | --- | --- | --- |
 | Dados mockados | mesmo esquema dos relatos | Script em `dados/mock/` | **Fonte do MVP** — ver regras abaixo |
-| Dados abertos de PE / Grande Recife (versão antiga) | linhas, operadoras e paradas | CSV | Em uso no MVP; atualizar é decisão futura |
+| GTFS oficial do Grande Recife | linhas, operadoras, paradas e itinerários (ônibus e metrô) | GTFS estático (ZIP) | **Em uso no MVP**, validado (ADR 0029) |
 | INMET, estação Recife | temperatura horária | CSV | Validar — dado real para cruzar com o mock |
 | Frota climatizada por linha | se a linha opera com ar | A pedir à Prefeitura | Decisão futura (seção 12) |
 | Relatos de usuários reais | lotação, clima, ar, vaga PCD por linha e hora | PostgreSQL | Após o lançamento; coleta piloto é decisão futura |
@@ -456,7 +456,7 @@ A disciplina define só a entrega final, em 11/12/2026; os prazos intermediário
 | 3 — Validação e entrega | 25/11 a 08/12 | Testes de uso, storytelling, documentação | RD08, RD09, RD10, RD11 | Pitch e documentação final prontos |
 | Folga e entrega final | 09/12 a 11/12 | — | — | Entregue |
 
-**Depois da disciplina — Expansão (benchmark):** coleta real, GTFS atualizado, novos modais (ex.: VLT), alertas de percurso, PostGIS, GPS/ETA e rotas.
+**Depois da disciplina — Expansão (benchmark):** coleta real, novos modais (ex.: VLT), alertas de percurso, PostGIS, GPS/ETA e rotas.
 
 ## 12. Pendências
 
@@ -481,15 +481,13 @@ Valores iniciais, escolhidos sem dados. Revisar todos quando houver relatos reai
 | Pedido | Para quê | Status |
 | --- | --- | --- |
 | Lista de linhas com frota climatizada | Testar H2 e H3; calibrar o mock | Não solicitado |
-| GTFS atualizado do Grande Recife | Substituir os dados antigos | Não solicitado |
 | Demanda de passageiros por linha | Escolher as linhas do piloto | Não solicitado |
-| Operadora de cada linha | Testar H2 | Não solicitado (tentar antes nos dados abertos) |
+| Lista de linhas BRT | Marcar o modal BRT, que o GTFS não distingue (ADR 0029) | Não solicitado |
 
 ### Decisões futuras
 
 - [ ] Coleta com usuários reais: quando, quantas pessoas e termo de consentimento (LGPD)
 - [ ] Metas numéricas das métricas da seção 9
-- [ ] Trocar os dados antigos pelo GTFS atualizado, quando chegar
 - [ ] Incorporar a lista de frota climatizada, quando chegar
 - [ ] Revisar os parâmetros a calibrar com dados reais
 - [ ] Onde publicar o site e o dashboard (fase 2)

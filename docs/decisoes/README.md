@@ -8,7 +8,7 @@ Cada arquivo registra uma decisão: contexto, decisão, alternativas e consequê
 | 0002 | [Lotação em três níveis](0002-lotacao-tres-niveis.md) | aceita |
 | 0003 | [Relato por linha e sentido, com prefixo do veículo opcional](0003-relato-por-linha-e-sentido.md) | aceita |
 | 0004 | [Somente versão web responsiva no MVP](0004-somente-web-responsiva.md) | aceita |
-| 0005 | [Linhas e paradas a partir dos dados abertos antigos de PE](0005-linhas-de-dados-abertos-antigos.md) | aceita |
+| 0005 | [Linhas e paradas a partir dos dados abertos antigos de PE](0005-linhas-de-dados-abertos-antigos.md) | substituída por 0029 |
 | 0006 | [MVP sobre dados mockados calibrados com dados reais](0006-mvp-sobre-dados-mockados.md) | aceita |
 | 0007 | [EDA organizada em quatro princípios](0007-eda-quatro-principios.md) | aceita |
 | 0008 | [Dashboard em Streamlit acoplado ao Django](0008-dashboard-streamlit-acoplado.md) | aceita |
@@ -32,6 +32,7 @@ Cada arquivo registra uma decisão: contexto, decisão, alternativas e consequê
 | 0026 | [Desenho do pipeline bronze → prata → ouro](0026-desenho-do-pipeline.md) | aceita |
 | 0027 | [Tailwind CLI standalone e HTMX locais](0027-tailwind-cli-standalone-e-htmx.md) | aceita |
 | 0028 | [Concorrência e erros do `registrar_relato`](0028-concorrencia-e-erros-do-registrar-relato.md) | aceita |
+| 0029 | [GTFS oficial do Grande Recife como fonte de linhas e paradas](0029-gtfs-oficial-do-grande-recife.md) | aceita |
 
 ## Modelo
 
