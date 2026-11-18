@@ -1,7 +1,11 @@
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 from django.http import JsonResponse
 from django.urls import path
-from django.views.generic import TemplateView
+
+from contas import views as contas_views
+from transporte import views as transporte_views
+from transporte.api import BuscaLinhaApi
 
 
 def saude(request):
@@ -12,5 +16,16 @@ def saude(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("saude/", saude, name="saude"),
-    path("", TemplateView.as_view(template_name="inicio.html"), name="inicio"),
+    path("", transporte_views.inicio, name="inicio"),
+    path("linhas/<int:pk>/", transporte_views.linha_status, name="linha_status"),
+    path("cadastro/", contas_views.cadastro, name="cadastro"),
+    path(
+        "entrar/",
+        auth_views.LoginView.as_view(
+            template_name="contas/entrar.html", redirect_authenticated_user=True
+        ),
+        name="login",
+    ),
+    path("sair/", auth_views.LogoutView.as_view(), name="logout"),
+    path("api/linhas/", BuscaLinhaApi.as_view(), name="api_linhas"),
 ]
