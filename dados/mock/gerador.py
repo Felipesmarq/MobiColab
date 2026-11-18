@@ -18,6 +18,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import numpy as np
+import pandas as pd
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -47,6 +48,7 @@ class Resultado:
     confirmacoes: int = 0
     contestacoes: int = 0
     horas_temperatura: int = 0
+    horas_temperatura_real: int = 0
     arquivo_temperatura: Path | None = None
 
 
@@ -84,11 +86,14 @@ def gerar(config, fim=None, pasta_temperatura=None):
     rng = np.random.default_rng(config["reprodutibilidade.semente"])
     resultado = Resultado()
 
+    pasta_temperatura = Path(pasta_temperatura or PASTA_TEMPERATURA)
+    reais = _temperatura_real(pasta_temperatura, fuso)
     temperatura = _temperatura(config, dias, rng)
-    resultado.arquivo_temperatura = _gravar_temperatura(
-        temperatura, dias, fuso, pasta_temperatura or PASTA_TEMPERATURA
-    )
+    sinteticas = {chave: valor for chave, valor in temperatura.items() if chave not in reais}
+    temperatura.update({chave: reais[chave] for chave in temperatura if chave in reais})
+    resultado.arquivo_temperatura = _gravar_temperatura(sinteticas, fuso, pasta_temperatura)
     resultado.horas_temperatura = len(temperatura)
+    resultado.horas_temperatura_real = len(temperatura) - len(sinteticas)
 
     with transaction.atomic():
         usuarios, pesos, trolls = _usuarios(config, rng)
@@ -198,17 +203,37 @@ def _temperatura(config, dias, rng):
     return serie
 
 
-def _gravar_temperatura(serie, dias, fuso, pasta):
-    pasta = Path(pasta)
+def _temperatura_real(pasta, fuso):
+    """{(dia, hora) locais: °C} dos arquivos reais da pasta (ex.: INMET, issue #26).
+
+    O conforto térmico do mock é sorteado a partir da temperatura. Se houver
+    medição real para a hora, é ela que vale, a mesma que a prata vai usar; senão
+    o relato seguiria uma temperatura e a ouro mostraria outra.
+    """
+    reais = {}
+    for caminho in sorted(Path(pasta).glob("*.csv")):
+        if caminho.name == ARQUIVO_TEMPERATURA:
+            continue
+        df = pd.read_csv(caminho)
+        if not {"data_hora", "temperatura_c"} <= set(df.columns):
+            continue
+        df = df[df["temperatura_c"].notna()]
+        momentos = pd.to_datetime(df["data_hora"], utc=True).dt.tz_convert(fuso)
+        for momento, valor in zip(momentos, df["temperatura_c"], strict=True):
+            reais[(momento.date(), momento.hour)] = round(float(valor), 1)
+    return reais
+
+
+def _gravar_temperatura(serie, fuso, pasta):
+    """Grava só as horas sintéticas; as reais já estão no arquivo da fonte."""
     pasta.mkdir(parents=True, exist_ok=True)
     caminho = pasta / ARQUIVO_TEMPERATURA
     with open(caminho, "w", newline="", encoding="utf-8") as arquivo:
         escritor = csv.writer(arquivo)
         escritor.writerow(["data_hora", "temperatura_c", "fonte"])
-        for dia in dias:
-            for hora in range(24):
-                momento = datetime.combine(dia, time(hora), tzinfo=fuso)
-                escritor.writerow([momento.isoformat(), serie[(dia, hora)], "mock"])
+        for (dia, hora), valor in sorted(serie.items()):
+            momento = datetime.combine(dia, time(hora), tzinfo=fuso)
+            escritor.writerow([momento.isoformat(), valor, "mock"])
     return caminho
 
 

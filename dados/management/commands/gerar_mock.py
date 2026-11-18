@@ -52,6 +52,8 @@ class Command(BaseCommand):
                 f"{resultado.confirmacoes} confirmações e {resultado.contestacoes} contestações."
             )
         )
+        sinteticas = resultado.horas_temperatura - resultado.horas_temperatura_real
         self.stdout.write(
-            f"Temperatura: {resultado.horas_temperatura} horas em {resultado.arquivo_temperatura}"
+            f"Temperatura: {resultado.horas_temperatura} horas, {resultado.horas_temperatura_real} "
+            f"reais (INMET) e {sinteticas} sintéticas em {resultado.arquivo_temperatura}"
         )
