@@ -3,13 +3,15 @@ from django.shortcuts import render
 
 from transporte.models import Linha
 
+RECENTES_NA_SESSAO = "linhas_recentes"
+
 
 def inicio(request):
     termo = request.GET.get("q", "").strip()
     linhas = Linha.objects.filter(ativa=True)
     if termo:
         linhas = linhas.filter(Q(codigo__icontains=termo) | Q(nome__icontains=termo))
-    recentes = request.session.get("linhas_recentes", [])
+    recentes = request.session.get(RECENTES_NA_SESSAO, [])
     if recentes:
         linhas = linhas.order_by(
             Case(
@@ -21,4 +23,8 @@ def inicio(request):
         )
     else:
         linhas = linhas.order_by("codigo")
-    return render(request, "inicio.html", {"linhas": linhas, "termo": termo})
+    return render(
+        request,
+        "inicio.html",
+        {"linhas": linhas, "termo": termo},
+    )

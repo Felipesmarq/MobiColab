@@ -21,7 +21,9 @@ urlpatterns = [
     path("", inicio, name="inicio"),
     path(
         "entrar/",
-        auth_views.LoginView.as_view(template_name="contas/entrar.html"),
+        auth_views.LoginView.as_view(
+            template_name="contas/entrar.html", redirect_authenticated_user=True
+        ),
         name="login",
     ),
     path("cadastro/", cadastro, name="cadastro"),

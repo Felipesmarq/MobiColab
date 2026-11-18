@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}MobiColab{% endblock %} · MobiColab</title>
   <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
-  <link rel="stylesheet" href="{% static 'css/componentes.css' %}">
   <script src="{% static 'js/htmx.min.js' %}" defer></script>
 </head>
 <body class="min-h-full flex flex-col bg-slate-50 text-slate-900 antialiased"
@@ -21,12 +20,12 @@
       {% if request.user.is_authenticated %}
         <form method="post" action="{% url 'logout' %}">
           {% csrf_token %}
-          <button type="submit" class="text-sm underline">Sair</button>
+          <button type="submit" class="min-h-12 px-2 text-sm font-medium underline">Sair</button>
         </form>
       {% else %}
         <div class="flex gap-3 text-sm">
-          <a href="{% url 'login' %}" class="underline">Entrar</a>
-          <a href="{% url 'cadastro' %}" class="underline">Criar conta</a>
+          <a href="{% url 'login' %}" class="flex min-h-12 items-center underline">Entrar</a>
+          <a href="{% url 'cadastro' %}" class="flex min-h-12 items-center underline">Criar conta</a>
         </div>
       {% endif %}
     </div>
