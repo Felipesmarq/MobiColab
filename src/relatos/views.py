@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Exists, OuterRef
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -116,7 +117,11 @@ def enviar_relato(request, pk):
                 else:
                     messages.success(request, "Obrigado por colaborar!")
                 destino = reverse("linha_status", args=[linha.pk])
-                return redirect(f"{destino}?{urlencode({'sentido': relato.sentido})}")
+                destino = f"{destino}?{urlencode({'sentido': relato.sentido})}"
+                if request.headers.get("HX-Request"):
+                    # Envio por HTMX (RNF03): o navegador troca de página pelo cabeçalho.
+                    return HttpResponse(headers={"HX-Redirect": destino})
+                return redirect(destino)
     else:
         sentido = request.GET.get("sentido", Sentido.IDA)
         if sentido not in Sentido.values:
