@@ -47,3 +47,42 @@ def test_login_usa_email_e_senha_da_conta(client):
 
     assert resposta.status_code == 302
     assert resposta.headers["Location"] == reverse("inicio")
+
+
+def test_cadastro_recusa_email_repetido_com_outra_caixa(client):
+    get_user_model().objects.create_user(email="passageira@exemplo.com", password="x")
+
+    resposta = client.post(
+        reverse("cadastro"),
+        {
+            "email": "Passageira@exemplo.com",
+            "password1": "senha-forte-12345",
+            "password2": "senha-forte-12345",
+        },
+    )
+
+    assert resposta.status_code == 200
+    assert "Já existe uma conta com este e-mail" in resposta.content.decode()
+    assert get_user_model().objects.count() == 1
+
+
+def test_logout_encerra_a_sessao(client):
+    usuario = get_user_model().objects.create_user(
+        email="passageira@exemplo.com", password="senha-forte-12345"
+    )
+    client.force_login(usuario)
+
+    resposta = client.post(reverse("logout"))
+
+    assert resposta.status_code == 302
+    assert not client.get(reverse("inicio")).wsgi_request.user.is_authenticated
+
+
+def test_status_da_linha_nao_exige_login(client):
+    from transporte.models import Linha, Modal
+
+    linha = Linha.objects.create(
+        codigo="060", nome="Cidade Universitária", modal=Modal.ONIBUS, destino_ida="CDU"
+    )
+
+    assert client.get(reverse("linha_status", args=[linha.pk])).status_code == 200
